@@ -1,6 +1,7 @@
 SvDepth
 ======
 
+
 Requirements
 ============
 
@@ -11,7 +12,7 @@ Requirements
 Fetching SvDepth
 ===============
 
-	
+	git clone https://github.com/asylvz/SvDepth --recursive
 
 Compilation
 ===========
@@ -31,16 +32,25 @@ Running SvDepth
 SONIC file (annotations container)
 ==================================
 
-SONIC files are available under aux/
+SONIC files for some human and mouse genome reference versions are available at external repo: https://github.com/BilkentCompGen/sonic-prebuilt
 
  * human_g1k_v37.sonic: SONIC file for Human Reference Genome GRCh37 (1000 Genomes Project version)
- 	* Also download the reference genome at: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz. 
+	* Also download the reference genome at: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz. 
  * ucsc_hg19.sonic: SONIC file for the human reference genome, UCSC version build hg19.
 	* Also download the reference genome at: http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz. Deflate the tar archive and concatenate all chromosomes into a single FASTA file.
  * ucsc_hg38.sonic: SONIC file for the human reference genome build 38.
 	* Also download the reference genome at: http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chromFa.tar.gz. Deflate the tar archive and concatenate all chromosomes into a single FASTA file.
+ * mm9.sonic: SONIC file for the mouse reference genome version mm9.
+	* Also download the reference genome at: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/chromFa.tar.gz. Deflate the tar archive and concatenate all chromosomes into a single FASTA file.
+ * mm10.sonic: SONIC file for the mouse reference genome version mm10.
+	* Also download the reference genome at: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/chromFa.tar.gz. Deflate the tar archive and concatenate all chromosomes into a single FASTA file.
 
-Make sure that the same reference was used to align the reads beforehand (BAM file) and to create the SONIC file. The SONIC files and the reference FASTA files linked above are compatible.
+Building the SONIC file
+=======================
+
+If you are working with a different reference genome please refer to the SONIC development repository: https://github.com/calkan/sonic/
+
+The README.md file includes documentation on how to obtain the necessary files for different genomes from the UCSC Genome Browser.
 
 
 All parameters
