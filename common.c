@@ -26,7 +26,7 @@ void init_params( parameters** params)
 	( *params)->outdir = NULL;
 	( *params)->bam_file = ( char*) getMem( sizeof( char));
 	( *params)->bam_file = NULL;
-	( *params)->force_read_length = 0;
+	( *params)->min_sv_size = 0;
 	( *params)->first_chrom = 0;
 	( *params)->last_chrom = -1;
 	( *params)->load_sonic = 0;

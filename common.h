@@ -50,7 +50,7 @@ typedef struct _params
 	char *del_file;
 	char* bam_file; /* the actual list that holds all bam file paths after tokenization */
 	char* outprefix; /* prefix for the output files */
-	int force_read_length; /* force read length to a certain value, discard those that are shorter. Hidden feature due to GIAB */
+	int min_sv_size;
 	int load_sonic; /*load SONIC file*/
 	char *sonic_info; /* SONIC reference information string for building */
 	int first_chrom; /*the first chromosome as indexed in the ref to be computer for. 0 by default*/

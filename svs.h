@@ -2,6 +2,8 @@
 #ifndef SVS_H_
 #define SVS_H_
 
+#include "common.h"
+
 #define ROW_DELIMITERS " \t\r\n"
 
 typedef struct _svs
@@ -19,6 +21,6 @@ typedef struct _svs
 }svs;
 
 
-int load_known_SVs(svs** vars, char* input_del, char* input_dup, char* chr, int* del_count, int* dup_count);
+int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, int* dup_count);
 
 #endif /* SVS_H_ */

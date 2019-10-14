@@ -103,17 +103,13 @@ void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, ch
 
 	for( count = 0; count < sv_count; count++)
 	{
-		if((all_svs[count].SV_type == DELETION && all_svs[count].del_likelihood < params->rd_threshold) ||
-				(all_svs[count].SV_type == DUPLICATION && all_svs[count].dup_likelihood < params->rd_threshold))
-			continue;
-
 		//fprintf(stderr,"%s\t%d\t%d\t%c\t%.2lf\t%.2lf\t%.2f\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].SV_type, all_svs[count].del_likelihood, all_svs[count].dup_likelihood,all_svs[count].copy_number);
-		if(all_svs[count].SV_type != DELETION)
+		if(all_svs[count].SV_type == DUPLICATION && all_svs[count].dup_likelihood > params->rd_threshold * 5 && all_svs[count].copy_number > 3)
 		{
 			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].dup_likelihood, all_svs[count].copy_number);
 			sv_cnt_dup++;
 		}
-		else
+		else if(all_svs[count].SV_type == DELETION && all_svs[count].del_likelihood > params->rd_threshold && all_svs[count].copy_number < 0.3)
 		{
 			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.1f\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].del_likelihood, all_svs[count].copy_number);
 			sv_cnt_del++;
@@ -151,7 +147,7 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	del_count = 0;
 	dup_count = 0;
 
-	load_known_SVs( &all_svs, params->del_file, params->dup_file, chr_name, &del_count, &dup_count);
+	load_known_SVs( &all_svs, params, chr_name, &del_count, &dup_count);
 	//fprintf( stderr, "\n\n%d DELS, %d DUPS in the input for chromosome %s\n\n", del_count, dup_count, chr_name);
 
 	sv_count = del_count + dup_count;

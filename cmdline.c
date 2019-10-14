@@ -26,7 +26,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			{"dels"    , required_argument,   0, 'd'},
 			{"help"   , no_argument,         0, 'h'},
 			{"version", no_argument,         0, 'v'},
-			{"force-read-length"    , required_argument,	 0, 'l'},
+			{"sv-size"    , required_argument,	 0, 'l'},
 			{"out"    , required_argument,	 0, 'o'},
 			{"sonic"    , required_argument,	 0, 's'},
 			{"sonic-info"    , required_argument,	 0, 'n'},
@@ -78,7 +78,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			break;
 
 		case 'l':
-			params->force_read_length = atoi( optarg);
+			params->min_sv_size = atoi( optarg);
 			break;
 
 		case 'h':
@@ -136,16 +136,14 @@ int parse_command_line( int argc, char** argv, parameters* params)
 		return EXIT_PARAM_ERROR;
 	}
 
-
-	/* check forced read length to be a positive integer or zero */
-	if( params->force_read_length < 0)
+	if( params->min_sv_size <= 0)
 	{
-		fprintf( stderr, "[SvDepth CMDLINE WARNING] Invalid forced read length (%d). Resetted to 0 (disabled).\n", params->force_read_length);
-		params->force_read_length = 0;
+		params->min_sv_size = 1000;
+		fprintf( stderr, "Minimum size of an SV is set to %d\n", params->min_sv_size);
 	}
 
 	if( threshold == NULL)
-		params->rd_threshold = 5;
+		params->rd_threshold = 100;
 	else
 	{
 		params->rd_threshold = atoi(threshold);
