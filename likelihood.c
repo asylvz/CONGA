@@ -89,12 +89,12 @@ void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, ch
 		if(all_svs[count].SV_type == DUPLICATION)
 		{
 			all_svs[count].dup_likelihood = sumLikelihoodDup / (double)( sumLikelihoodDel + sumLikelihoodNorm + epsilon);
-			fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].dup_likelihood);
+			fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\t%.2f\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].dup_likelihood, all_svs[count].copy_number);
 		}
 		else
 		{
 			all_svs[count].del_likelihood = sumLikelihoodDel / (double)( sumLikelihoodDup + sumLikelihoodNorm + epsilon);
-			fprintf(fp_del,"%s\t%d\t%d\t%.2lf\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].del_likelihood);
+			fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\n", all_svs[count].chr_name, all_svs[count].start, all_svs[count].end, all_svs[count].del_likelihood, all_svs[count].copy_number);
 		}
 	}
 

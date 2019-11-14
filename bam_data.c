@@ -38,7 +38,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params)
 	bam1_core_t bam_alignment_core;
 	bam1_t* bam_alignment = bam_init1();
 
-	while( bam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
+	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
 		bam_alignment_core = bam_alignment->core;
 
