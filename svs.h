@@ -14,6 +14,7 @@ typedef struct _svs
 	int end;
 	char SV_type;
 	long depth;
+	int rp;
 	float copy_number;
 	double del_likelihood;
 	double dup_likelihood;
@@ -21,6 +22,5 @@ typedef struct _svs
 }svs;
 
 
-int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, int* dup_count);
-
+int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr, int* del_count, int* dup_count);
 #endif /* SVS_H_ */

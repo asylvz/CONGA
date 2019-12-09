@@ -27,10 +27,14 @@ void init_params( parameters** params)
 	( *params)->bam_file = ( char*) getMem( sizeof( char));
 	( *params)->bam_file = NULL;
 	( *params)->min_sv_size = 0;
+	( *params)->rp_support = 0;
 	( *params)->first_chrom = 0;
 	( *params)->last_chrom = -1;
 	( *params)->load_sonic = 0;
 	( *params)->sonic_info = NULL;
+	( *params)->ref_seq = NULL;
+	( *params)->hash_size = 0;
+	( *params)->min_read_length = 60;
 }
 
 
@@ -188,15 +192,20 @@ void reverse_string( char* str)
 
 int compare_start_pos (const void *a, const void *b)
 {
-	svs *arg1 = (svs*) a;
-	svs *arg2 = (svs*) b;
+	int num1 = ((svs*)a)->start;
+	int num2 = ((svs*)b)->start;
 
-	if ((*arg1).start >= (*arg2).start)
+	int num1_end = ((svs*)a)->end;
+	int num2_end = ((svs*)b)->end;
+
+	if(num1 > num2)
 		return 1;
-	else if ((*arg1).start < (*arg2).start)
+	else if(num1 == num2)
+		return num1_end - num2_end;
+	else
 		return -1;
 
-	return 0;
+	//return num1 - num2;
 }
 
 int compare_size_int( const void* p, const void* q)
@@ -287,4 +296,55 @@ int find_chr_index_bam( char* chromosome_name, bam_hdr_t* bam_header)
 int vh_cmprReadNameStr (const void *a, const void *b)
 {
 	return strcmp (*(char **) a, *(char **) b);
+}
+
+/* check if ACGT */
+int is_dna_letter( char base)
+{
+	if (base == 'A')
+		return 1;
+	if (base == 'C')
+		return 1;
+	if (base == 'G')
+		return 1;
+	if (base == 'T')
+		return 1;
+	return 0;
+}
+
+int is_proper( int flag)
+{
+	if ( (flag & BAM_FSECONDARY) == 0 && (flag & BAM_FSUPPLEMENTARY) == 0 && (flag & BAM_FDUP) == 0 && (flag & BAM_FQCFAIL) == 0)
+		return 1;
+
+	return 0;
+}
+
+void get_sample_name(bam_info* in_bam, char* header_text)
+{
+	char *tmp_header = NULL;
+	set_str( &( tmp_header), header_text);
+	char* p = strtok( tmp_header, "\t\n");
+	char sample_name_buffer[1024];
+
+	while( p != NULL)
+	{
+		/* If the current token has "SM" as the first two characters,
+			we have found our Sample Name */
+		if( p[0] == 'S' && p[1] == 'M')
+		{
+			/* Get the Sample Name */
+			strncpy( sample_name_buffer, p + 3, strlen( p) - 3);
+
+			/* Add the NULL terminator */
+			sample_name_buffer[strlen( p) - 3] = '\0';
+
+			/* Exit loop */
+			break;
+		}
+		p = strtok( NULL, "\t\n");
+	}
+
+	set_str( &( in_bam->sample_name), sample_name_buffer);
+	free( tmp_header);
 }

@@ -1,13 +1,57 @@
 
 #include <stdio.h>
 #include "free.h"
+#include "split_read.h"
+
+
+void free_splits(bam_info* in_bam)
+{
+	int i;
+	splitRead *sfcPtr, *sfcPtrNext;
+
+	SplitsInfo *aPtr;
+	SplitRow *tmp, *tmp_next;
+
+	sfcPtr = in_bam->listSplitRead;
+	while( sfcPtr != NULL)
+	{
+		sfcPtrNext = sfcPtr->next;
+		if( sfcPtr->readName != NULL)
+			free( sfcPtr->readName);
+		if( sfcPtr->chromosome_name != NULL)
+			free( sfcPtr->chromosome_name);
+		if( sfcPtr->split_sequence != NULL)
+			free( sfcPtr->split_sequence);
+
+		free( sfcPtr);
+		sfcPtr = sfcPtrNext;
+	}
+	in_bam->listSplitRead = NULL;
+
+	aPtr = all_split_reads;
+	if( aPtr != NULL)
+	{
+		tmp = aPtr->head;
+		while( tmp != NULL)
+		{
+			tmp_next = tmp->next;
+			free( tmp);
+			tmp = tmp_next;
+		}
+
+		aPtr->head = NULL;
+		aPtr->tail = NULL;
+
+		free( aPtr);
+	}
+	all_split_reads = NULL;
+}
 
 void free_SVs(svs* sv_all, int sv_count)
 {
 	int count;
-	for( count = 0; count < sv_count; count++)
+	for(count = 0; count < sv_count; count++)
 	{
-		//fprintf(stderr,"\n%d\n", count);
 		if(sv_all[count].chr_name != NULL)
 			free(sv_all[count].chr_name);
 	}
@@ -16,9 +60,6 @@ void free_SVs(svs* sv_all, int sv_count)
 
 void free_DS(bam_info* in_bam, parameters *params)
 {
-	/* Free the read depth array*/
-	free( in_bam->read_depth_per_chr);
-
 	/* Free bams and related libraries */
 	free( in_bam->sample_name);
 	free( in_bam);

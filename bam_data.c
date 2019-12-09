@@ -2,45 +2,172 @@
 #include <math.h>
 #include "free.h"
 #include "likelihood.h"
+#include "split_read.h"
+
+struct SplitsInfo *all_split_reads = NULL;
 
 
-void get_sample_name(bam_info* in_bam, char* header_text)
+SplitRow *createSplitRow(int locMapLeftStart, int locMapLeftEnd, char orientationLeft,
+		int locMapRightStart, int locMapRightEnd, char orientationRight, char svType)
 {
-	char *tmp_header = NULL;
-	set_str( &( tmp_header), header_text);
-	char* p = strtok( tmp_header, "\t\n");
-	char sample_name_buffer[1024];
+	SplitRow *newRow = (SplitRow*) getMem(sizeof(SplitRow));
 
-	while( p != NULL)
-	{
-		/* If the current token has "SM" as the first two characters,
-			we have found our Sample Name */
-		if( p[0] == 'S' && p[1] == 'M')
-		{
-			/* Get the Sample Name */
-			strncpy( sample_name_buffer, p + 3, strlen( p) - 3);
+	newRow->next = NULL;
 
-			/* Add the NULL terminator */
-			sample_name_buffer[strlen( p) - 3] = '\0';
+	newRow->locMapLeftEnd = locMapLeftEnd;
+	newRow->locMapLeftStart = locMapLeftStart;
+	newRow->locMapRightStart = locMapRightStart;
+	newRow->locMapRightEnd = locMapRightEnd;
 
-			/* Exit loop */
-			break;
-		}
-		p = strtok( NULL, "\t\n");
-	}
+	newRow->orientationLeft = orientationLeft;
+	newRow->orientationRight = orientationRight;
 
-	set_str( &( in_bam->sample_name), sample_name_buffer);
-	free( tmp_header);
+	newRow->svType = svType;
+
+	return newRow;
 }
 
-void count_reads_bam( bam_info* in_bam, parameters* params)
+SplitRow *determine_SvType( splitRead *ptrSplitRead, posMapSplitRead *ptrPosMapSplit)
+{
+	int pos1_1, pos1_2, pos2_1, pos2_2;
+
+	/* Length of read A(left) and read B(right) */
+	int lengthRead, lengthSplit;
+
+	/* If soft clip is at the end */
+	lengthSplit = ptrSplitRead->read_length - ptrSplitRead->split_start;
+	lengthRead = ptrSplitRead->read_length - lengthSplit;
+
+	if( ptrSplitRead->pos < ptrPosMapSplit->posMap)
+	{
+		pos1_1 = ptrSplitRead->pos;
+		pos1_2 = ptrSplitRead->pos + lengthRead;
+		pos2_1 = ptrPosMapSplit->posMap;
+		pos2_2 = ptrPosMapSplit->posMap + lengthSplit;
+	}
+	else if( ptrPosMapSplit->posMap < ptrSplitRead->pos)
+	{
+		pos1_1 = ptrPosMapSplit->posMap;
+		pos1_2 = ptrPosMapSplit->posMap + lengthSplit;
+		pos2_1 = ptrSplitRead->pos;
+		pos2_2 = ptrSplitRead->pos + lengthRead;
+	}
+
+	if( pos1_2 >= pos2_1)
+		return NULL;
+
+	if( ptrSplitRead->orient == FORWARD && ptrPosMapSplit->orient == FORWARD)
+	{
+		if( ( ptrSplitRead->pos < ptrPosMapSplit->posMap))
+		{
+			SplitRow * newRow = createSplitRow (pos1_1, pos1_2, FORWARD, pos2_1, pos2_2, FORWARD, DELETION);
+			return newRow;
+		}
+		else if( ( ptrPosMapSplit->posMap < ptrSplitRead->pos))
+		{
+			SplitRow * newRow = createSplitRow (pos1_1, pos1_2, FORWARD, pos2_1, pos2_2, FORWARD, DUPLICATION);
+			return newRow;
+		}
+	}
+	return NULL;
+}
+
+int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
+{
+	float is_satellite = 0.0;
+	SplitRow *newRow = NULL;
+	posMapSplitRead *ptrPosMapSoftClip;
+
+	all_split_reads = ( SplitsInfo *) getMem( sizeof( struct SplitsInfo));
+	all_split_reads->size = 0;
+	all_split_reads->head = NULL;
+	all_split_reads->tail = NULL;
+
+	while( ptrSoftClip != NULL)
+	{
+		ptrPosMapSoftClip = ptrSoftClip->ptrSplitMap;
+		while( ptrPosMapSoftClip != NULL)
+		{
+			is_satellite = sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrSoftClip->pos, ptrSoftClip->pos + 1 ) +
+					sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrPosMapSoftClip->posMap, ptrPosMapSoftClip->posMap + 1);
+
+			if ( is_satellite == 0 && ptrSoftClip->qual > params->mq_threshold && strcmp(ptrSoftClip->chromosome_name, params->this_sonic->chromosome_names[chr_index]) == 0
+					&& ptrPosMapSoftClip->mapq > params->mq_threshold && ptrSoftClip->pos > 0 && ptrPosMapSoftClip->posMap > 0
+					&& ptrSoftClip->pos < params->this_sonic->chromosome_lengths[chr_index] && ptrPosMapSoftClip->posMap < params->this_sonic->chromosome_lengths[chr_index])
+			{
+				newRow = determine_SvType(ptrSoftClip, ptrPosMapSoftClip);
+				if( newRow != NULL)
+				{
+					/* For Deletion */
+					if( newRow->svType == DELETION)
+					{
+						newRow->orientationLeft = FORWARD;
+						newRow->orientationRight = REVERSE;
+						newRow->locMapLeftStart -= SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapLeftEnd -= SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapRightStart += SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapRightEnd += SOFTCLIP_WRONGMAP_WINDOW;
+					}
+					/* For Duplication */
+					else if(newRow->svType == DUPLICATION)
+					{
+						newRow->orientationLeft = REVERSE;
+						newRow->orientationRight = FORWARD;
+						newRow->locMapLeftStart -= SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapLeftEnd -= SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapRightStart += SOFTCLIP_WRONGMAP_WINDOW;
+						newRow->locMapRightEnd += SOFTCLIP_WRONGMAP_WINDOW;
+					}
+					else
+						newRow = NULL;
+				}
+
+				if( newRow == NULL)
+					;//fprintf( stderr, "ERROR loading divet from bam (soft clip)\n");
+				else
+				{
+					if( all_split_reads->head == NULL || all_split_reads->tail == NULL)
+					{
+						all_split_reads->head = newRow;
+						all_split_reads->tail = newRow;
+					}
+					else
+					{
+						all_split_reads->tail->next = newRow;
+						all_split_reads->tail = newRow;
+					}
+					all_split_reads->size++;
+				}
+			}
+			ptrPosMapSoftClip = ptrPosMapSoftClip->next;
+		}
+		ptrSoftClip = ptrSoftClip->next;
+	}
+	fprintf(stderr,"There are %d split reads\n",all_split_reads->size);
+	return all_split_reads->size;
+}
+
+void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index)
 {
 	bam1_core_t bam_alignment_core;
 	bam1_t* bam_alignment = bam_init1();
 
+	int return_type;
+
 	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
 		bam_alignment_core = bam_alignment->core;
+
+		if( sonic_is_satellite( params->this_sonic, params->this_sonic->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0
+				&& bam_alignment_core.qual > params->mq_threshold && is_proper( bam_alignment_core.flag)
+		&& bam_alignment_core.l_qseq > params->min_read_length)
+		{
+			if( bam_alignment_core.l_qseq > params->min_read_length)
+				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
+
+			if( return_type == -1)
+				continue;
+		}
 
 		/* Increase the read depth and read count for RD filtering */
 		in_bam->read_depth_per_chr[bam_alignment_core.pos]++;
@@ -60,7 +187,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
-	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\n");
+	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\n");
 
 	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output Del file: %s\n", svfile_del);
@@ -112,6 +239,10 @@ void read_bam( bam_info* in_bam, parameters *params)
 			exit( 1);
 		}
 
+
+		/* Extract the Sample Name from the header text */
+		get_sample_name( in_bam, in_bam->bam_header->text);
+
 		fprintf( stderr, "\n");
 		fprintf( stderr, "Reading BAM [%s] - Chromosome: %s", in_bam->sample_name, in_bam->bam_header->target_name[chr_index_bam]);
 
@@ -121,7 +252,15 @@ void read_bam( bam_info* in_bam, parameters *params)
 		init_rd_per_chr( in_bam, params, chr_index);
 
 		/* Read bam file for this chromosome */
-		count_reads_bam( in_bam, params);
+		count_reads_bam( in_bam, params, chr_index);
+
+
+		fprintf( stderr, "\nReading the Reference Genome");
+		readReferenceSeq(params, chr_index);
+
+		fprintf( stderr, "\nMapping the Splits\n");
+		map_split_reads(in_bam, params, chr_index);
+
 
 		/* Mean value (mu) calculation */
 		calc_mean_per_chr( params, in_bam, chr_index);
@@ -141,7 +280,15 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if( not_in_bam == 1)
 			continue;
 
+		//Load Split-Reads
+		read_SplitReads(in_bam->listSplitRead, params, chr_index);
+
+		//fprintf( stderr, "\nLikelihood Estimation\n");
 		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, chr);
+		free_hash_table(params);
+
+		/* Free the read depth array*/
+		free( in_bam->read_depth_per_chr);
 	}
 	fprintf( stderr, "\n");
 	fclose( fpDel);

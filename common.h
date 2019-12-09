@@ -42,6 +42,19 @@
 extern long long memUsage;
 extern FILE *logFile; //Defined in tardis.c
 
+/* Gender of the bam file */
+enum gender{ MALE, FEMALE};
+
+extern struct SplitsInfo *all_split_reads;
+
+typedef struct SplitsInfo
+{
+	int size;
+	struct SplitRow *head;
+	struct SplitRow *tail;
+
+}SplitsInfo;
+
 typedef struct _params
 {
 	char* ref_genome; /* path to reference genome - fasta */
@@ -51,15 +64,52 @@ typedef struct _params
 	char* bam_file; /* the actual list that holds all bam file paths after tokenization */
 	char* outprefix; /* prefix for the output files */
 	int min_sv_size;
-	int load_sonic; /*load SONIC file*/
-	char *sonic_info; /* SONIC reference information string for building */
+	int min_read_length;
 	int first_chrom; /*the first chromosome as indexed in the ref to be computer for. 0 by default*/
 	int last_chrom; /*the last chromosome as indexed in the ref to be computer for. ref->chrom_count by default*/
 	int rd_threshold; /* Threshold is used in RD filtering, calWeight() in vh_setcover.c */
 	int mq_threshold; /* Minimum mapping quality */
+	int rp_support; /* Minimum number of read-pairs to designate a variant as PRECISE */
+	char *ref_seq; /* reference sequence per chromosome */
+	int hash_size; /* size of the hash table for split read mapping */
 	char *sonic_file; /* SONIC file name */
+	int load_sonic; /*load SONIC file*/
+	char *sonic_info; /* SONIC reference information string for building */
 	sonic *this_sonic; /* SONIC */
 } parameters;
+
+typedef struct _bam_info
+{
+	int read_count; /* total number of reads in this library */
+	short* read_depth_per_chr; /* read depth */
+	float mean;
+	float mean_rd_per_gc[101]; /* GC percentages, i.e., GC[13]=323 means 343 windows have GC of 13% */
+
+	htsFile* bam_file; /* file pointer to the BAM file */
+	hts_idx_t* bam_file_index;
+	hts_itr_t *iter;
+	bam_hdr_t* bam_header;
+
+	enum gender sample_gender; /* gender of the sample */
+	char* sample_name; /* name of the sample, parsed from SM in the BAM header */
+	struct splitRead *listSplitRead;
+} bam_info;
+
+typedef struct SplitRow
+{
+	int locMapLeftEnd;
+	int locMapLeftStart;
+	char orientationLeft;
+	int locMapRightStart;
+	int locMapRightEnd;
+	int startPosition;
+	int endPosition;
+	char orientationRight;
+	char svType;
+
+	struct SplitRow *next;
+} SplitRow;
+
 
 /* Parameter related TARDIS functions */
 void init_params( parameters**);
@@ -85,6 +135,9 @@ int min( int x, int y);
 int hammingDistance( char *str1, char *str2, int len);
 int vh_cmprReadNameStr (const void *a, const void *b);
 void get_working_directory(parameters *params);
+int is_dna_letter( char base);
+int is_proper( int flag);
+void get_sample_name(bam_info* in_bam, char* header_text);
 
 // Memory allocation/tracking functions
 void* getMem( size_t size);

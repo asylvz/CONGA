@@ -4,7 +4,7 @@
 #include "svs.h"
 
 
-int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, int* dup_count)
+int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr, int* del_count, int* dup_count)
 {
 	int i;
 	char* return_value;
@@ -101,7 +101,8 @@ int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, in
 	rewind(sv_file_dup);
 
 
-	(*vars) = ( svs*) getMem( sizeof( svs) * ((*del_count) + (*dup_count) + 1));
+	(*vars_del) = ( svs*) getMem( sizeof( svs) * ((*del_count) + 1));
+	(*vars_dup) = ( svs*) getMem( sizeof( svs) * ((*dup_count) + 1));
 
 	//fprintf(stderr,"%d dels and %d dups available\n",(*del_count), (*dup_count));
 	int cnt = 0;
@@ -140,14 +141,15 @@ int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, in
 		}
 
 
-		(*vars)[cnt].chr_name = NULL;
-		(*vars)[cnt].chr_name = ( char*) getMem( sizeof( char) * ( strlen( chr_name) + 1));
-		strncpy( (*vars)[cnt].chr_name, chr_name, ( strlen( chr_name) + 1));
+		(*vars_del)[cnt].chr_name = NULL;
+		(*vars_del)[cnt].chr_name = ( char*) getMem( sizeof( char) * ( strlen( chr_name) + 1));
+		strncpy( (*vars_del)[cnt].chr_name, chr_name, ( strlen( chr_name) + 1));
 
-		(*vars)[cnt].id = cnt;
-		(*vars)[cnt].start = start_sv;
-		(*vars)[cnt].end = end_sv;
-		(*vars)[cnt].SV_type = DELETION;
+		(*vars_del)[cnt].id = cnt;
+		(*vars_del)[cnt].start = start_sv;
+		(*vars_del)[cnt].end = end_sv;
+		(*vars_del)[cnt].SV_type = DELETION;
+		(*vars_del)[cnt].rp = 0;
 
 		cnt++;
 
@@ -155,6 +157,7 @@ int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, in
 	}
 	fclose(sv_file_del);
 
+	cnt = 0;
 	while(!feof(sv_file_dup))
 	{
 		return_value = fgets (line, 512, sv_file_dup);
@@ -191,14 +194,15 @@ int load_known_SVs(svs** vars, parameters *params, char* chr, int* del_count, in
 
 		//fprintf(stderr, "%s - %s - %d - %d - %d\n", chr, chr_name, start_sv, end_sv, end_sv-start_sv);
 
-		(*vars)[cnt].chr_name = NULL;
-		(*vars)[cnt].chr_name = ( char*) getMem( sizeof( char) * ( strlen( chr_name) + 1));
-		strncpy( (*vars)[cnt].chr_name, chr_name, ( strlen( chr_name) + 1));
+		(*vars_dup)[cnt].chr_name = NULL;
+		(*vars_dup)[cnt].chr_name = ( char*) getMem( sizeof( char) * ( strlen( chr_name) + 1));
+		strncpy( (*vars_dup)[cnt].chr_name, chr_name, ( strlen( chr_name) + 1));
 
-		(*vars)[cnt].id = cnt;
-		(*vars)[cnt].start = start_sv;
-		(*vars)[cnt].end = end_sv;
-		(*vars)[cnt].SV_type = DUPLICATION;
+		(*vars_dup)[cnt].id = cnt;
+		(*vars_dup)[cnt].start = start_sv;
+		(*vars_dup)[cnt].end = end_sv;
+		(*vars_dup)[cnt].SV_type = DUPLICATION;
+		(*vars_dup)[cnt].rp = 0;
 
 		cnt++;
 

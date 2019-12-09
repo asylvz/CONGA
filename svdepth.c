@@ -1,14 +1,13 @@
 #include "svdepth.h"
-
 #include <stdio.h>
 #include <time.h>
 
 #include "bam_data.h"
-#include "common.h"
 #include "cmdline.h"
 #include "sonic/sonic.h"
 #include "free.h"
 #include "read_distribution.h"
+#include "split_read.h"
 
 FILE *logFile = NULL;
 int total_dels = 0;
@@ -49,16 +48,9 @@ int main( int argc, char** argv)
 	/* Read BAM files */
 	in_bam = ( bam_info*) getMem( sizeof( bam_info));
 	in_bam->sample_name = NULL;
+	in_bam->listSplitRead = NULL;
 
-	htsFile* bam_file = safe_hts_open( params->bam_file, "r");
-
-	/* Read in BAM header information */
-	bam_hdr_t* bam_header = bam_hdr_read( ( bam_file->fp).bgzf);
-
-	/* Extract the Sample Name from the header text */
-	get_sample_name( in_bam, bam_header->text);
-
-	return_value = hts_close( bam_file);
+	init_hash_count( params);
 
 	//Find the depth of SVs
 	read_bam(in_bam, params);

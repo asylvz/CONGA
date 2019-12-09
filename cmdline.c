@@ -27,12 +27,14 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			{"help"   , no_argument,         0, 'h'},
 			{"version", no_argument,         0, 'v'},
 			{"sv-size"    , required_argument,	 0, 'l'},
+			{"min-read-length"    , required_argument,	 0, 'b'},
 			{"out"    , required_argument,	 0, 'o'},
 			{"sonic"    , required_argument,	 0, 's'},
 			{"sonic-info"    , required_argument,	 0, 'n'},
 			{"first-chrom", required_argument, 0, FIRST_CHROM},
 			{"last-chrom", required_argument, 0, LAST_CHROM},
 			{"rd", required_argument, 0, 'a'},
+			{"rp", required_argument, 0, 'j'},
 			{"mq", required_argument, 0, 'e'},
 			{0        , 0,                   0,  0 }
 	};
@@ -79,6 +81,10 @@ int parse_command_line( int argc, char** argv, parameters* params)
 
 		case 'l':
 			params->min_sv_size = atoi( optarg);
+			break;
+
+		case 'b':
+			params->min_read_length = atoi( optarg);
 			break;
 
 		case 'h':
@@ -143,10 +149,18 @@ int parse_command_line( int argc, char** argv, parameters* params)
 	}
 
 	if( threshold == NULL)
-		params->rd_threshold = 100;
+		params->rd_threshold = 1000;
 	else
 	{
 		params->rd_threshold = atoi(threshold);
+		free( threshold);
+	}
+
+	if( rp_support == NULL)
+		params->rp_support = 2;
+	else
+	{
+		params->rp_support = atoi(rp_support);
 		free( threshold);
 	}
 
