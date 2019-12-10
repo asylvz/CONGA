@@ -193,7 +193,7 @@ void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, ch
 
 	for( count = 0; count < dup_count; count++)
 	{
-		if(all_svs_dup[count].dup_likelihood > params->rd_threshold && (all_svs_dup[count].copy_number > 2 || all_svs_dup[count].rp >= params->rp_support))
+		if(all_svs_dup[count].dup_likelihood > params->rd_threshold || (all_svs_dup[count].copy_number > 1 && all_svs_dup[count].dup_likelihood > 5 && all_svs_dup[count].rp > 0))
 		{
 			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].dup_likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp);
 			sv_cnt_dup++;
