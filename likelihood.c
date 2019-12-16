@@ -55,7 +55,7 @@ void calculateObservedReadPair()
 				int k = check_rp_intersection(all_svs_del, splitRowPtr->locMapLeftStart, 0, del_count);
 				int j = check_rp_intersection(all_svs_del, splitRowPtr->locMapRightStart, 0, del_count);
 
-				if((k != -1) && (j != -1))
+				if((k != -1) && (k == j))
 				{
 					//fprintf(stderr,"k = %d - Present\t%d - %d\tKnown %d - %d\n",k, splitRowPtr->locMapLeftStart, splitRowPtr->locMapRightEnd, known_dels[k].start, known_dels[k].end);
 					all_svs_del[k].rp++;
@@ -70,7 +70,7 @@ void calculateObservedReadPair()
 				int k = check_rp_intersection(all_svs_dup, splitRowPtr->locMapLeftStart, 0, dup_count);
 				int j = check_rp_intersection(all_svs_dup, splitRowPtr->locMapRightStart, 0, dup_count);
 
-				if((k != -1) && (j != -1))
+				if((k != -1) && (k == j))
 				{
 					all_svs_dup[k].rp++;
 					dup_present++;
@@ -85,8 +85,8 @@ void calculateObservedReadPair()
 		}
 	}
 
-	//fprintf(stderr,"%d DELS and %d DUPS found by split-reads\n", split_del_cnt, split_dup_cnt);
-	//fprintf(stderr,"(%d DELS and %d DUPS overlap with a known loci using %d bps wrong-map window)\n", del_present, dup_present, WRONGMAP_WINDOW);
+	fprintf(stderr,"%d DELS and %d DUPS found by split-reads\n", split_del_cnt, split_dup_cnt);
+	fprintf(stderr,"(%d DELS and %d DUPS overlap with a known loci using %d bps wrong-map window)\n", del_present, dup_present, WRONGMAP_WINDOW);
 }
 
 
@@ -104,22 +104,22 @@ void calculateLikelihoodCNV(bam_info *in_bam, parameters *params, svs arr[], int
 		totalReadCount += in_bam->read_depth_per_chr[i];
 
 	}
-	arr[count].depth = ( long)totalReadCount;
+	arr[count].depth = (long) totalReadCount;
 	for( i = 0; i < 10; i++)
 	{
 		if( i > 0)
 		{
-			lambda = ( ( ( float)i / ( float)2 ) * expectedReadCount);
+			lambda = (((float)i / ( float)2 ) * expectedReadCount);
 			arr[count].cnv_probability[i] =  exp( totalReadCount * log( lambda) - lambda - lgamma( totalReadCount + 1));
 			//fprintf(stderr, "%lf\n", all_svs[count].cnv_probability[i]);
 		}
 		else if( i == 0)
 		{
-			if( totalReadCount < ( 0.2) * expectedReadCount)
+			if(totalReadCount < (0.2) * expectedReadCount)
 				arr[count].cnv_probability[i] = 1;
 			else
 			{
-				lambda = ( ( 0.01) * expectedReadCount);
+				lambda = ((0.01) * expectedReadCount);
 				arr[count].cnv_probability[i] = exp( totalReadCount * log( lambda) - lambda - lgamma( totalReadCount + 1));
 				//fprintf(stderr, "%lf\n", all_svs[count].cnv_probability[i]);
 				//fprintf(stderr, "i = %d read cnt= %d expected=%f - CNV=%lf\n", i, totalReadCount, expectedReadCount, cnvProb[count][i]);
@@ -193,7 +193,7 @@ void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, ch
 
 	for( count = 0; count < dup_count; count++)
 	{
-		if(all_svs_dup[count].dup_likelihood > params->rd_threshold || (all_svs_dup[count].copy_number > 1 && all_svs_dup[count].dup_likelihood > 5 && all_svs_dup[count].rp > 0))
+		if(all_svs_dup[count].dup_likelihood > (params->rd_threshold / 10) && all_svs_dup[count].copy_number > 1 && all_svs_dup[count].rp > 1)
 		{
 			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].dup_likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp);
 			sv_cnt_dup++;
