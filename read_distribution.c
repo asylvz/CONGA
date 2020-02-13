@@ -42,7 +42,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 
 void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 {
-	int lib_index, i, gc_val, window_per_gc[101];
+	int lib_index, i, gc_val = -1, window_per_gc[101];
 	long rd_per_gc[101];
 
 	calc_mu_per_chr( in_bam, params->this_sonic->chromosome_lengths[chr_index]);

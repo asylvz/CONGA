@@ -22,6 +22,8 @@ void free_splits(bam_info* in_bam)
 			free( sfcPtr->chromosome_name);
 		if( sfcPtr->split_sequence != NULL)
 			free( sfcPtr->split_sequence);
+		if(sfcPtr->ptrSplitMap != NULL)
+			free(sfcPtr->ptrSplitMap);
 
 		free( sfcPtr);
 		sfcPtr = sfcPtrNext;

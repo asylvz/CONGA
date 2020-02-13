@@ -209,6 +209,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 			continue;
 		}
 
+
 		/* HTS implementation */
 		in_bam->bam_file = safe_hts_open( params->bam_file, "r");
 
@@ -222,6 +223,10 @@ void read_bam( bam_info* in_bam, parameters *params)
 			fprintf( stderr, "Error: Sam Index cannot be loaded (sam_index_load)\n");
 			exit( 1);
 		}
+
+		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
+			continue;
+
 
 		chr_index_bam = find_chr_index_bam( params->this_sonic->chromosome_names[chr_index], in_bam->bam_header);
 		not_in_bam = 0;
@@ -238,7 +243,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 			fprintf( stderr, "Error: Iterator cannot be loaded (bam_itr_queryi)\n");
 			exit( 1);
 		}
-
 
 		/* Extract the Sample Name from the header text */
 		get_sample_name( in_bam, in_bam->bam_header->text);
