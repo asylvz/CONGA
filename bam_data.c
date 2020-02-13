@@ -265,6 +265,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		fprintf( stderr, "\nMapping the Splits\n");
 		map_split_reads(in_bam, params, chr_index);
 
+		free_hash_table(params);
 
 		/* Mean value (mu) calculation */
 		calc_mean_per_chr( params, in_bam, chr_index);
@@ -289,7 +290,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 		//fprintf( stderr, "\nLikelihood Estimation\n");
 		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, chr);
-		free_hash_table(params);
 
 		/* Free the read depth array*/
 		free( in_bam->read_depth_per_chr);
