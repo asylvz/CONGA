@@ -11,6 +11,7 @@ void free_splits(bam_info* in_bam)
 
 	SplitsInfo *aPtr;
 	SplitRow *tmp, *tmp_next;
+	posMapSplitRead *ptrSplitMapPtr, *ptrSplitMapNext;
 
 	sfcPtr = in_bam->listSplitRead;
 	while( sfcPtr != NULL)
@@ -22,8 +23,17 @@ void free_splits(bam_info* in_bam)
 			free( sfcPtr->chromosome_name);
 		if( sfcPtr->split_sequence != NULL)
 			free( sfcPtr->split_sequence);
-		if(sfcPtr->ptrSplitMap != NULL)
-			free(sfcPtr->ptrSplitMap);
+
+		ptrSplitMapPtr = sfcPtr->ptrSplitMap;
+		while(ptrSplitMapPtr != NULL)
+		{
+			ptrSplitMapNext = ptrSplitMapPtr->next;
+
+			if(ptrSplitMapPtr != NULL)
+				free( ptrSplitMapPtr);
+
+			ptrSplitMapPtr = ptrSplitMapNext;
+		}
 
 		free( sfcPtr);
 		sfcPtr = sfcPtrNext;
