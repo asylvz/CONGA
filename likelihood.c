@@ -245,5 +245,4 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 
 	free_SVs(all_svs_del,del_count);
 	free_SVs(all_svs_dup,dup_count);
-	free_splits(in_bam);
 }

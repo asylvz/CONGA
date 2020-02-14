@@ -182,7 +182,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 	int i, bam_index, chr_index, chr_index_bam, return_value, not_in_bam = 0;
 	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ];
 	FILE *fpDel = NULL, *fpDup = NULL, *fpSVs = NULL;
-	char chr[50];
 
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
@@ -198,6 +197,24 @@ void read_bam( bam_info* in_bam, parameters *params)
 	fpDup = safe_fopen( svfile_dup,"w");
 
 
+	/* HTS implementation */
+	in_bam->bam_file = safe_hts_open( params->bam_file, "r");
+
+	/* Read in BAM header information */
+	in_bam->bam_header = bam_hdr_read( ( in_bam->bam_file->fp).bgzf);
+
+	/* Load the bam index file */
+	in_bam->bam_file_index = sam_index_load( in_bam->bam_file, params->bam_file);
+	if( in_bam->bam_file_index == NULL)
+	{
+		fprintf( stderr, "Error: Sam Index cannot be loaded (sam_index_load)\n");
+		exit( 1);
+	}
+
+	/* Extract the Sample Name from the header text */
+	get_sample_name( in_bam, in_bam->bam_header->text);
+
+
 	for( chr_index = 0; chr_index < params->this_sonic->number_of_chromosomes; chr_index++)
 	{
 		if (chr_index < params->first_chrom)
@@ -207,21 +224,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 		{
 			chr_index = params->this_sonic->number_of_chromosomes;
 			continue;
-		}
-
-
-		/* HTS implementation */
-		in_bam->bam_file = safe_hts_open( params->bam_file, "r");
-
-		/* Read in BAM header information */
-		in_bam->bam_header = bam_hdr_read( ( in_bam->bam_file->fp).bgzf);
-
-		/* Load the bam index file */
-		in_bam->bam_file_index = sam_index_load( in_bam->bam_file, params->bam_file);
-		if( in_bam->bam_file_index == NULL)
-		{
-			fprintf( stderr, "Error: Sam Index cannot be loaded (sam_index_load)\n");
-			exit( 1);
 		}
 
 		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
@@ -244,13 +246,8 @@ void read_bam( bam_info* in_bam, parameters *params)
 			exit( 1);
 		}
 
-		/* Extract the Sample Name from the header text */
-		get_sample_name( in_bam, in_bam->bam_header->text);
-
 		fprintf( stderr, "\n");
 		fprintf( stderr, "Reading BAM [%s] - Chromosome: %s", in_bam->sample_name, in_bam->bam_header->target_name[chr_index_bam]);
-
-		strcpy(chr, in_bam->bam_header->target_name[chr_index_bam]);
 
 		/* Initialize the read depth and read count */
 		init_rd_per_chr( in_bam, params, chr_index);
@@ -270,17 +267,9 @@ void read_bam( bam_info* in_bam, parameters *params)
 		/* Mean value (mu) calculation */
 		calc_mean_per_chr( params, in_bam, chr_index);
 
-		/* Close the BAM file */
-		return_value = hts_close( in_bam->bam_file);
-		if( return_value != 0)
-		{
-			fprintf( stderr, "Error closing BAM file\n");
-			exit( 1);
-		}
+
 		/* Free the bam related files */
 		sam_itr_destroy( in_bam->iter);
-		bam_hdr_destroy( in_bam->bam_header);
-		hts_idx_destroy(in_bam->bam_file_index);
 
 		if( not_in_bam == 1)
 			continue;
@@ -289,11 +278,24 @@ void read_bam( bam_info* in_bam, parameters *params)
 		read_SplitReads(in_bam->listSplitRead, params, chr_index);
 
 		//fprintf( stderr, "\nLikelihood Estimation\n");
-		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, chr);
+		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, in_bam->bam_header->target_name[chr_index_bam]);
 
-		/* Free the read depth array*/
+		/* Free the read depth array and split reads*/
+		free_splits(in_bam);
 		free( in_bam->read_depth_per_chr);
 	}
+
+	/* Close the BAM file */
+	return_value = hts_close( in_bam->bam_file);
+	if( return_value != 0)
+	{
+		fprintf( stderr, "Error closing BAM file\n");
+		exit( 1);
+	}
+
+	bam_hdr_destroy( in_bam->bam_header);
+	hts_idx_destroy(in_bam->bam_file_index);
+
 	fprintf( stderr, "\n");
 	fclose( fpDel);
 	fclose( fpDup);

@@ -40,6 +40,7 @@ void free_splits(bam_info* in_bam)
 	}
 	in_bam->listSplitRead = NULL;
 
+
 	aPtr = all_split_reads;
 	if( aPtr != NULL)
 	{
@@ -84,5 +85,6 @@ void free_DS(bam_info* in_bam, parameters *params)
 	free( params->outprefix);
 	free( params->outdir);
 	free( params->sonic_file);
+	free( params->sonic_info);
 	free( params);
 }
