@@ -83,180 +83,6 @@ int is_kmer_valid (char *str){
 	return 1;
 }
 
-int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignment, int chr_index)
-{
-	uint8_t *tmp;
-	int return_type, i;
-	float avgPhredQual = 0;
-
-	bam1_core_t bam_alignment_core = bam_alignment->core;
-
-	if( bam_alignment_core.pos == 0)
-		return -1;
-	else
-	{
-		/* Split the read */
-		splitRead *newEl = ( splitRead *) getMem( sizeof( splitRead));
-
-		newEl->readName = NULL;
-		set_str( &(newEl->readName), bam_alignment->data);
-
-		/* Get the name of the chromosome */
-		newEl->chromosome_name = NULL;
-		set_str( &(newEl->chromosome_name), params->this_sonic->chromosome_names[chr_index]);
-
-		newEl->pos = bam_alignment_core.pos;
-		newEl->qual = bam_alignment_core.qual;
-		newEl->orient = FORWARD;
-		newEl->split_start = (bam_alignment_core.l_qseq / 2);
-		newEl->read_length = bam_alignment_core.l_qseq;
-
-		uint8_t *a_qual = bam_get_qual( bam_alignment);
-
-		newEl->split_sequence = ( char *)getMem( ( bam_alignment_core.l_qseq + 1) * sizeof( char));
-
-		for( i = 0; i < bam_alignment_core.l_qseq; i++)
-		{
-			if( bam_seqi( bam_get_seq( bam_alignment), i) == 1)
-				newEl->split_sequence[i] = 'A';
-			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 2)
-				newEl->split_sequence[i] = 'C';
-			else if(bam_seqi( bam_get_seq( bam_alignment), i) == 4)
-				newEl->split_sequence[i] = 'G';
-			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 8)
-				newEl->split_sequence[i] = 'T';
-			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 15)
-				newEl->split_sequence[i] = 'N';
-		}
-		for( i = newEl->split_start; i < bam_alignment_core.l_qseq; i++)
-			avgPhredQual = avgPhredQual + a_qual[i];
-
-		avgPhredQual = ( float)avgPhredQual / ( float)(bam_alignment_core.l_qseq - newEl->split_start);
-
-		newEl->split_sequence[bam_alignment_core.l_qseq] = '\0';
-		newEl->avgPhredQualSplitRead = ( int)floorf( avgPhredQual);
-		newEl->ptrSplitMap = NULL;
-		newEl->next = in_bam->listSplitRead;
-		in_bam->listSplitRead = newEl;
-
-		split_read_count++;
-
-		return RETURN_SUCCESS;
-	}
-}
-
-
-void build_hash_table(const char *ref, int len, int hash_size, int mode)
-{
-	int i = 0, j = 0;
-	char seed[HASHKMERLEN + 1];
-	int hash_val;
-	int mask;
-	int len_limit;
-
-	mask = (hash_size - 1) >> 2;
-
-	if (mode == HASH_COUNT)
-		memset (hash_table_count, 0, hash_size * sizeof (int));
-	else
-		memset (hash_table_iter, 0, hash_size * sizeof (int));
-
-
-	len_limit = len - HASHKMERLEN + 1;
-
-	/* get first kmer */
-	while (!is_dna_letter(ref[i])) i++;
-
-	strncpy (seed, ref+i, HASHKMERLEN);
-	seed[HASHKMERLEN] = 0;
-
-	while (!is_kmer_valid (seed)){
-		i++;
-		strncpy (seed, ref+i, HASHKMERLEN);
-		seed[HASHKMERLEN] = 0;
-	}
-
-	hash_val = hash_function_ref (seed);
-	if (mode == HASH_COUNT)
-	{
-		( hash_table_count[hash_val])++;
-	}
-	else if (hash_table_count[hash_val] != 0)
-	{
-		hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
-		( hash_table_iter[hash_val])++;
-	}
-
-	j = i + HASHKMERLEN;
-
-	while (i < len_limit)
-	{
-		i++; //shift
-		if (is_dna_letter(ref[j]))
-		{
-			hash_val = hash_function_next( hash_val, mask, ref[j++]);
-			if (mode == HASH_COUNT)
-				( hash_table_count[hash_val])++;
-			else if (hash_table_count[hash_val] != 0)
-			{
-				hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
-				( hash_table_iter[hash_val])++;
-			}
-		}
-		else
-		{
-			/* recover from non-ACGT */
-			while (!is_dna_letter(ref[j]) && i < len_limit) { i++; j++; }
-			if (i >= len_limit)
-				break;
-
-			strncpy (seed, ref+i, HASHKMERLEN);
-			seed[HASHKMERLEN] = 0;
-
-			while (!is_kmer_valid (seed)){
-				i++;
-				strncpy (seed, ref+i, HASHKMERLEN);
-				seed[HASHKMERLEN] = 0;
-			}
-
-			j = i + HASHKMERLEN;
-			hash_val = hash_function_ref (seed);
-
-			if (mode == HASH_COUNT)
-				( hash_table_count[hash_val])++;
-			else if (hash_table_count[hash_val] != 0)
-			{
-				hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
-				( hash_table_iter[hash_val])++;
-			}
-		}
-	}
-}
-
-void init_hash_table(parameters *params)
-{
-	int i;
-	int hash_size = params->hash_size;
-	hash_table_array = (int **) getMem (hash_size * sizeof (int *));
-
-	for (i = 0; i < hash_size; i++)
-	{
-		if (hash_table_count[i] != 0 && hash_table_count[i] < MAX_SR_HIT)
-			hash_table_array[i] = (int *) getMem (hash_table_count[i] * sizeof (int));
-		else
-		{
-			hash_table_count[i] = 0;
-			hash_table_array[i] = NULL;
-		}
-	}
-}
-
-void create_hash_table( parameters *params, int len)
-{
-	init_hash_table( params);
-	build_hash_table( params->ref_seq, len, params->hash_size, HASH_BUILD);
-}
-
 posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index, char *str, int pos)
 {
 	int i, index, posMapSize, posMap[10000], hammingDisMap[10000];
@@ -388,7 +214,204 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 	return returnPtr;
 }
 
-void map_split_reads( bam_info* in_bam, parameters* params, int chr_index)
+int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignment, int chr_index)
+{
+	uint8_t *tmp;
+	int return_type, i, tmp_length;
+	float avgPhredQual = 0;
+	char* str;
+	char* str_split;
+
+	bam1_core_t bam_alignment_core = bam_alignment->core;
+
+	if( bam_alignment_core.pos == 0)
+		return -1;
+	else
+	{
+		/* Split the read */
+		splitRead *newEl = ( splitRead *) getMem( sizeof( splitRead));
+
+		newEl->readName = NULL;
+		set_str( &(newEl->readName), bam_alignment->data);
+
+		/* Get the name of the chromosome */
+		newEl->chromosome_name = NULL;
+		set_str( &(newEl->chromosome_name), params->this_sonic->chromosome_names[chr_index]);
+
+		newEl->pos = bam_alignment_core.pos;
+		newEl->qual = bam_alignment_core.qual;
+		newEl->orient = FORWARD;
+		newEl->split_start = (bam_alignment_core.l_qseq / 2);
+		newEl->read_length = bam_alignment_core.l_qseq;
+
+		uint8_t *a_qual = bam_get_qual( bam_alignment);
+
+		for( i = newEl->split_start; i < bam_alignment_core.l_qseq; i++)
+			avgPhredQual = avgPhredQual + a_qual[i];
+
+		avgPhredQual = ( float)avgPhredQual / ( float)(bam_alignment_core.l_qseq - newEl->split_start);
+
+		newEl->avgPhredQualSplitRead = ( int)floorf( avgPhredQual);
+
+		if(newEl->avgPhredQualSplitRead < params->mq_threshold)
+		{
+			free(newEl->chromosome_name);
+			free(newEl->readName);
+			free(newEl);
+			return -1;
+		}
+
+
+		str = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
+		newEl->ptrSplitMap = NULL;
+
+		int k = 0;
+		for( i = newEl->read_length / 2; i < newEl->read_length; i++)
+		{
+			if( bam_seqi( bam_get_seq( bam_alignment), i) == 1)
+				str[k] = 'A';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 2)
+				str[k] = 'C';
+			else if(bam_seqi( bam_get_seq( bam_alignment), i) == 4)
+				str[k] = 'G';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 8)
+				str[k] = 'T';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 15)
+				str[k] = 'N';
+			k++;
+		}
+		str[k] = '\0';
+
+		if(str != NULL)
+		{
+			newEl->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str, newEl->pos);
+			free(str);
+		}
+
+		newEl->next = in_bam->listSplitRead;
+		in_bam->listSplitRead = newEl;
+
+		split_read_count++;
+
+		return RETURN_SUCCESS;
+	}
+}
+
+
+void build_hash_table(const char *ref, int len, int hash_size, int mode)
+{
+	int i = 0, j = 0;
+	char seed[HASHKMERLEN + 1];
+	int hash_val;
+	int mask;
+	int len_limit;
+
+	mask = (hash_size - 1) >> 2;
+
+	if (mode == HASH_COUNT)
+		memset (hash_table_count, 0, hash_size * sizeof (int));
+	else
+		memset (hash_table_iter, 0, hash_size * sizeof (int));
+
+
+	len_limit = len - HASHKMERLEN + 1;
+
+	/* get first kmer */
+	while (!is_dna_letter(ref[i])) i++;
+
+	strncpy (seed, ref+i, HASHKMERLEN);
+	seed[HASHKMERLEN] = 0;
+
+	while (!is_kmer_valid (seed)){
+		i++;
+		strncpy (seed, ref+i, HASHKMERLEN);
+		seed[HASHKMERLEN] = 0;
+	}
+
+	hash_val = hash_function_ref (seed);
+	if (mode == HASH_COUNT)
+	{
+		( hash_table_count[hash_val])++;
+	}
+	else if (hash_table_count[hash_val] != 0)
+	{
+		hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
+		( hash_table_iter[hash_val])++;
+	}
+
+	j = i + HASHKMERLEN;
+
+	while (i < len_limit)
+	{
+		i++; //shift
+		if (is_dna_letter(ref[j]))
+		{
+			hash_val = hash_function_next( hash_val, mask, ref[j++]);
+			if (mode == HASH_COUNT)
+				( hash_table_count[hash_val])++;
+			else if (hash_table_count[hash_val] != 0)
+			{
+				hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
+				( hash_table_iter[hash_val])++;
+			}
+		}
+		else
+		{
+			/* recover from non-ACGT */
+			while (!is_dna_letter(ref[j]) && i < len_limit) { i++; j++; }
+			if (i >= len_limit)
+				break;
+
+			strncpy (seed, ref+i, HASHKMERLEN);
+			seed[HASHKMERLEN] = 0;
+
+			while (!is_kmer_valid (seed)){
+				i++;
+				strncpy (seed, ref+i, HASHKMERLEN);
+				seed[HASHKMERLEN] = 0;
+			}
+
+			j = i + HASHKMERLEN;
+			hash_val = hash_function_ref (seed);
+
+			if (mode == HASH_COUNT)
+				( hash_table_count[hash_val])++;
+			else if (hash_table_count[hash_val] != 0)
+			{
+				hash_table_array[hash_val][hash_table_iter[hash_val]] = i;
+				( hash_table_iter[hash_val])++;
+			}
+		}
+	}
+}
+
+void init_hash_table(parameters *params)
+{
+	int i;
+	int hash_size = params->hash_size;
+	hash_table_array = (int **) getMem (hash_size * sizeof (int *));
+
+	for (i = 0; i < hash_size; i++)
+	{
+		if (hash_table_count[i] != 0 && hash_table_count[i] < MAX_SR_HIT)
+			hash_table_array[i] = (int *) getMem (hash_table_count[i] * sizeof (int));
+		else
+		{
+			hash_table_count[i] = 0;
+			hash_table_array[i] = NULL;
+		}
+	}
+}
+
+void create_hash_table( parameters *params, int len)
+{
+	init_hash_table( params);
+	build_hash_table( params->ref_seq, len, params->hash_size, HASH_BUILD);
+}
+
+
+
+/*void map_split_reads( bam_info* in_bam, parameters* params, int chr_index)
 {
 	int i, tmp;
 	char *str;
@@ -415,7 +438,7 @@ void map_split_reads( bam_info* in_bam, parameters* params, int chr_index)
 		}
 		ptrSplitRead = ptrSplitRead->next;
 	}
-}
+}*/
 
 
 /* Read the reference genome */

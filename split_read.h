@@ -38,7 +38,7 @@ typedef struct splitRead
 	int opCount;
 	int split_start;
 	int read_length;
-	char *split_sequence;
+	//char *split_sequence;
 	int avgPhredQualSplitRead; // the average phred quality of the basepairs which have be cut (the soft clip part).
 
 	struct splitRead *next;

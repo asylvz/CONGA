@@ -143,7 +143,7 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 		}
 		ptrSoftClip = ptrSoftClip->next;
 	}
-	fprintf(stderr,"There are %d split reads\n",all_split_reads->size);
+	fprintf(stderr,"%d split reads paired\n", all_split_reads->size);
 	return all_split_reads->size;
 }
 
@@ -173,6 +173,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index)
 		in_bam->read_depth_per_chr[bam_alignment_core.pos]++;
 		in_bam->read_count++;
 	}
+	//fprintf(stderr,"\nThere are %ld split reads in bam\n",split_read_count);
 	bam_destroy1( bam_alignment);
 }
 
@@ -252,15 +253,14 @@ void read_bam( bam_info* in_bam, parameters *params)
 		/* Initialize the read depth and read count */
 		init_rd_per_chr( in_bam, params, chr_index);
 
-		/* Read bam file for this chromosome */
-		count_reads_bam( in_bam, params, chr_index);
-
-
 		fprintf( stderr, "\nReading the Reference Genome");
 		readReferenceSeq(params, chr_index);
 
-		fprintf( stderr, "\nMapping the Splits\n");
-		map_split_reads(in_bam, params, chr_index);
+		/* Read bam file for this chromosome */
+		count_reads_bam( in_bam, params, chr_index);
+
+		//fprintf( stderr, "\nMapping the Splits\n");
+		//map_split_reads(in_bam, params, chr_index);
 
 		free_hash_table(params);
 
