@@ -1,4 +1,4 @@
-SvDepth
+CONGA
 ======
 
 
@@ -9,10 +9,10 @@ Requirements
  * htslib (included as submodule; http://htslib.org/)
  * sonic  (included as submodule; https://github.com/calkan/sonic)
 
-Fetching SvDepth
+Fetching CONGA
 ===============
 
-	git clone https://github.com/asylvz/SvDepth --recursive
+	git clone https://github.com/asylvz/CONGA --recursive
 
 Compilation
 ===========
@@ -25,7 +25,7 @@ Type:
 Running SvDepth
 ===========================
 
-	svdepth -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
+	conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 
