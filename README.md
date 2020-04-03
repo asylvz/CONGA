@@ -22,7 +22,7 @@ Type:
 	make libs
 	make
 
-Running SvDepth
+Running CONGA
 ===========================
 
 	conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
