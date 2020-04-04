@@ -26,8 +26,8 @@ int main( int argc, char** argv)
 	time ( &rawtime);
 	timeinfo = localtime( &rawtime);
 
-	/* Keeping simple logs in svdepth.log file */
-	logFile = safe_fopen ("svdepth.log", "w");
+	/* Keeping simple logs in conga.log file */
+	logFile = safe_fopen ("conga.log", "w");
 	fprintf( logFile, "#CreationDate=%d.%d.%d\n\n", timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday);
 
 	/* Set program parameters */

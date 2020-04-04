@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cmdline.h"
-
 #include "svdepth.h"
 
 #define FIRST_CHROM 10001
@@ -16,7 +15,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 	int o;
 	static int load_sonic = 0;
 	static int do_remap = 0;
-	char *threshold = NULL, *mapping_qual = NULL, *rp_support = NULL;
+	char *min_rd_support = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
 	static struct option long_options[] = 
 	{
@@ -26,7 +25,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			{"dels"    , required_argument,   0, 'd'},
 			{"help"   , no_argument,         0, 'h'},
 			{"version", no_argument,         0, 'v'},
-			{"sv-size"    , required_argument,	 0, 'l'},
+			{"min-sv-size"    , required_argument,	 0, 'l'},
 			{"min-read-length"    , required_argument,	 0, 'b'},
 			{"out"    , required_argument,	 0, 'o'},
 			{"sonic"    , required_argument,	 0, 's'},
@@ -101,20 +100,20 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			break;
 
 		case 'a':
-			set_str( &( threshold), optarg);
+			set_str( &( min_rd_support), optarg);
 			break;
 
 		case 'e':
-			set_str( &( mapping_qual), optarg);
+			set_str( &( min_mapping_qual), optarg);
 			break;
 
 		case 'j':
-			set_str( &( rp_support), optarg);
+			set_str( &( min_rp_support), optarg);
 			break;
 
 		case 'v':
-			fprintf( stderr, "\n...SvDepth....\n");
-			fprintf( stderr, "Version %s\n\tLast update: %s, build date: %s\n\n", SVDEPTH_VERSION, SVDEPTH_UPDATE, BUILD_DATE);
+			fprintf( stderr, "\n...CONGA....\n");
+			fprintf( stderr, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 			return 0;
 			break;
 		}
@@ -123,14 +122,14 @@ int parse_command_line( int argc, char** argv, parameters* params)
 	/* check if outprefix is given */
 	if( params->outprefix == NULL)
 	{
-		fprintf( stderr, "[SvDepth CMDLINE ERROR] Please enter the output file name prefix using the --out option.\n");
+		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter the output file name prefix using the --out option.\n");
 		return EXIT_PARAM_ERROR;
 	}
 
 	/* check if --ref   is invoked */
 	if( params->ref_genome == NULL)
 	{
-		fprintf( stderr, "[SvDepth CMDLINE ERROR] Please enter reference genome file (FASTA) using the --ref option.\n");
+		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter reference genome file (FASTA) using the --ref option.\n");
 		return EXIT_PARAM_ERROR;
 	}
 
@@ -138,7 +137,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 	/* check if --sonic  is invoked */
 	if( params->sonic_file == NULL && load_sonic)
 	{
-		fprintf( stderr, "[SvDepth CMDLINE ERROR] Please enter the SONIC file (BED) using the --sonic option.\n");
+		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter the SONIC file (BED) using the --sonic option.\n");
 		return EXIT_PARAM_ERROR;
 	}
 
@@ -148,28 +147,34 @@ int parse_command_line( int argc, char** argv, parameters* params)
 		fprintf( stderr, "Minimum size of an SV is set to %d\n", params->min_sv_size);
 	}
 
-	if( threshold == NULL)
+	if( params->min_read_length <= 0)
+	{
+		params->min_read_length = 60;
+		fprintf( stderr, "Minimum size of a read is set to %d\n", params->min_read_length);
+	}
+
+	if( min_rd_support == NULL)
 		params->rd_threshold = 1000;
 	else
 	{
-		params->rd_threshold = atoi(threshold);
-		free( threshold);
+		params->rd_threshold = atoi(min_rd_support);
+		free( min_rd_support);
 	}
 
-	if( rp_support == NULL)
-		params->rp_support = 2;
+	if( min_rp_support == NULL)
+		params->rp_support = 20;
 	else
 	{
-		params->rp_support = atoi(rp_support);
-		free( threshold);
+		params->rp_support = atoi(min_rp_support);
+		free( min_rd_support);
 	}
 
-	if( mapping_qual == NULL)
+	if( min_mapping_qual == NULL)
 		params->mq_threshold = 5;
 	else
 	{
-		params->mq_threshold = atoi(mapping_qual);
-		free( mapping_qual);
+		params->mq_threshold = atoi(min_mapping_qual);
+		free( min_mapping_qual);
 	}
 
 	if (load_sonic)
@@ -179,7 +184,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 		set_str( &(params->sonic_info), params->ref_genome);
 
 	get_working_directory(params);
-	fprintf(stderr, "[SvDepth INFO] Working directory: %s\n", params->outdir);
+	fprintf(stderr, "[CONGA INFO] Working directory: %s\n", params->outdir);
 
 	return RETURN_SUCCESS;
 
@@ -187,15 +192,17 @@ int parse_command_line( int argc, char** argv, parameters* params)
 
 void print_help( void)
 {  
-	fprintf( stdout, "\n... SvDepth ...\n");
-	fprintf( stdout, "Version %s\n\tLast update: %s, build date: %s\n\n", SVDEPTH_VERSION, SVDEPTH_UPDATE, BUILD_DATE);
+	fprintf( stdout, "\n... CONGA (COpy Number Genotyping in Ancient genomes) ...\n");
+	fprintf( stdout, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 	fprintf( stdout, "\tParameters:\n\n");
-	fprintf( stdout, "\t--input [BAM file ]        : Input file in sorted and indexed BAM format.\n");
-	fprintf( stdout, "\t--out   [output prefix]    : Prefix for the output file names.\n");
-	fprintf( stdout, "\t--ref   [reference genome] : Reference genome in FASTA format.\n");
-	fprintf( stdout, "\t--sonic [sonic file]       : SONIC file that contains assembly annotations.\n");
-	fprintf( stdout, "\t--dels [BED file]          : Known deletion SVs in BED format\n");
-	fprintf( stdout, "\t--dups [BED file]          : Known duplication SVs in BED format\n");
+	fprintf( stdout, "\t--input [BAM file ]        	: Input file in sorted and indexed BAM format.\n");
+	fprintf( stdout, "\t--out   [output prefix]    	: Prefix for the output file names.\n");
+	fprintf( stdout, "\t--ref   [reference genome] 	: Reference genome in FASTA format.\n");
+	fprintf( stdout, "\t--sonic [sonic file]       	: SONIC file that contains assembly annotations.\n");
+	fprintf( stdout, "\t--dels [BED file]          	: Known deletion SVs in BED format\n");
+	fprintf( stdout, "\t--dups [BED file]          	: Known duplication SVs in BED format\n");
+	fprintf( stdout, "\t--min-read-length [int]    	: Minimum length of a read to be processed (default: 60 bps)\n");
+	fprintf( stdout, "\t--min-sv-size [int]    		: Minimum length of a read to be processed (default: 1000 bps)\n");
 
 	fprintf( stdout, "\n\n\tInformation:\n");
 	fprintf( stdout, "\t--version                  : Print version and exit.\n");

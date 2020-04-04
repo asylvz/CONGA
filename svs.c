@@ -57,7 +57,7 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 
 	}
 	rewind(sv_file_del);
-
+	//fprintf(stderr,"%d\n", (*del_count));
 
 	while(!feof(sv_file_dup))
 	{
@@ -150,6 +150,7 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 		(*vars_del)[cnt].end = end_sv;
 		(*vars_del)[cnt].SV_type = DELETION;
 		(*vars_del)[cnt].rp = 0;
+		(*vars_del)[cnt].border_rp = 0;
 
 		cnt++;
 
@@ -203,6 +204,7 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 		(*vars_dup)[cnt].end = end_sv;
 		(*vars_dup)[cnt].SV_type = DUPLICATION;
 		(*vars_dup)[cnt].rp = 0;
+		(*vars_dup)[cnt].border_rp = 0;
 
 		cnt++;
 

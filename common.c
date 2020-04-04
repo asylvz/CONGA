@@ -24,8 +24,8 @@ void init_params( parameters** params)
 	( *params)->this_sonic = NULL;
 	( *params)->outprefix = NULL;
 	( *params)->outdir = NULL;
-	( *params)->bam_file = ( char*) getMem( sizeof( char));
 	( *params)->bam_file = NULL;
+	( *params)->bam_file = ( char*) getMem( sizeof( char));
 	( *params)->min_sv_size = 0;
 	( *params)->rp_support = 0;
 	( *params)->first_chrom = 0;
@@ -34,7 +34,7 @@ void init_params( parameters** params)
 	( *params)->sonic_info = NULL;
 	( *params)->ref_seq = NULL;
 	( *params)->hash_size = 0;
-	( *params)->min_read_length = 60;
+	( *params)->min_read_length = 0;
 }
 
 
@@ -114,7 +114,7 @@ FILE* safe_fopen( char* path, char* mode)
 	file = fopen( path, mode);  
 	if( !file)
 	{
-		sprintf( err, "[SvDepth INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
+		sprintf( err, "[CONGA INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
 		print_error( err);
 
 	}
@@ -130,7 +130,7 @@ gzFile safe_fopen_gz( char* path, char* mode)
 	file = gzopen( path, mode);  
 	if( !file)
 	{
-		sprintf( err, "[SvDepth INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
+		sprintf( err, "[CONGA INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
 		print_error( err);		
 	}
 	return file;
@@ -144,7 +144,7 @@ htsFile* safe_hts_open( char* path, char* mode)
 	bam_file = hts_open( path, mode);
 	if( !bam_file)
 	{
-		sprintf( err, "[SvDepth INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
+		sprintf( err, "[CONGA INPUT ERROR] Unable to open file %s in %s mode.", path, mode[0]=='w' ? "write" : "read");
 		print_error( err);
 	}
 

@@ -76,7 +76,7 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 {
 	float is_satellite = 0.0;
 	SplitRow *newRow = NULL;
-	posMapSplitRead *ptrPosMapSoftClip;
+	posMapSplitRead *ptrPosMapSoftClip = NULL;
 
 	all_split_reads = ( SplitsInfo *) getMem( sizeof( struct SplitsInfo));
 	all_split_reads->size = 0;
@@ -143,7 +143,7 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 		}
 		ptrSoftClip = ptrSoftClip->next;
 	}
-	fprintf(stderr,"%d split reads paired\n", all_split_reads->size);
+	fprintf(stderr,"\nCONGA paired %d single-end reads\n", all_split_reads->size);
 	return all_split_reads->size;
 }
 
@@ -227,8 +227,8 @@ void read_bam( bam_info* in_bam, parameters *params)
 			continue;
 		}
 
-		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
-			continue;
+		//if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
+			//continue;
 
 
 		chr_index_bam = find_chr_index_bam( params->this_sonic->chromosome_names[chr_index], in_bam->bam_header);
@@ -258,9 +258,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 		/* Read bam file for this chromosome */
 		count_reads_bam( in_bam, params, chr_index);
-
-		//fprintf( stderr, "\nMapping the Splits\n");
-		//map_split_reads(in_bam, params, chr_index);
 
 		free_hash_table(params);
 

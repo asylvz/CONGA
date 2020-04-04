@@ -15,10 +15,12 @@ typedef struct _svs
 	char SV_type;
 	long depth;
 	int rp;
+	int border_rp;
 	float copy_number;
 	double del_likelihood;
 	double dup_likelihood;
 	double cnv_probability[10];
+	double cnv_score;
 }svs;
 
 

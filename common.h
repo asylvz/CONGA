@@ -63,7 +63,7 @@ typedef struct _params
 	char *del_file;
 	char* bam_file; /* the actual list that holds all bam file paths after tokenization */
 	char* outprefix; /* prefix for the output files */
-	int min_sv_size;
+	int min_sv_size; /* minimum size of known SV loci. Smaller sized SVs than this value are discarded */
 	int min_read_length;
 	int first_chrom; /*the first chromosome as indexed in the ref to be computer for. 0 by default*/
 	int last_chrom; /*the last chromosome as indexed in the ref to be computer for. ref->chrom_count by default*/

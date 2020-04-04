@@ -14,6 +14,9 @@
 #define HASHKMERLEN 10
 #define MAX_SR_HIT 50000
 
+extern int *hash_table_count;
+extern int *hash_table_iter;
+
 typedef struct lociInRef
 {
 	int pos; /* pos in the referenceSeqInterest array (keeps the reference genome for each chromosome) */

@@ -59,7 +59,6 @@ unsigned int hash_function_ref( char *str)
 
 void init_hash_count(parameters *params)
 {
-
 	params->hash_size = pow (4, HASHKMERLEN);
 	hash_table_count = (int *) getMem( params->hash_size * sizeof (int));
 	hash_table_iter = (int *) getMem( params->hash_size * sizeof (int));
@@ -91,7 +90,7 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 	lociInRef *ptr;
 	char seed[HASHKMERLEN + 1];
 	char *strRev;
-	posMapSplitRead *tmpSplitMap, *returnPtr;
+	posMapSplitRead *tmpSplitMap = NULL, *returnPtr = NULL;
 
 	int *hash_ptr;
 	int num_hits;
@@ -217,10 +216,9 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignment, int chr_index)
 {
 	uint8_t *tmp;
-	int return_type, i, tmp_length;
+	int return_type, i;
 	float avgPhredQual = 0;
-	char* str;
-	char* str_split;
+	char str[512];
 
 	bam1_core_t bam_alignment_core = bam_alignment->core;
 
@@ -262,7 +260,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		}
 
 
-		str = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
+		//str = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
 		newEl->ptrSplitMap = NULL;
 
 		int k = 0;
@@ -285,7 +283,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		if(str != NULL)
 		{
 			newEl->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str, newEl->pos);
-			free(str);
+			//free(str);
 		}
 
 		newEl->next = in_bam->listSplitRead;

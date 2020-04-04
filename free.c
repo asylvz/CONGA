@@ -22,7 +22,7 @@ void free_splits(bam_info* in_bam)
 		if( sfcPtr->chromosome_name != NULL)
 			free( sfcPtr->chromosome_name);
 		//if( sfcPtr->split_sequence != NULL)
-			//free( sfcPtr->split_sequence);
+		//free( sfcPtr->split_sequence);
 
 		ptrSplitMapPtr = sfcPtr->ptrSplitMap;
 		while(ptrSplitMapPtr != NULL)
@@ -87,4 +87,10 @@ void free_DS(bam_info* in_bam, parameters *params)
 	free( params->sonic_file);
 	free( params->sonic_info);
 	free( params);
+
+	if(hash_table_count != NULL)
+		free(hash_table_count);
+
+	if(hash_table_iter != NULL)
+		free(hash_table_iter);
 }

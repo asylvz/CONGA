@@ -14,7 +14,8 @@
 #define true 1
 #define false 0
 
-#define WRONGMAP_WINDOW 5000
+#define WRONGMAP_WINDOW 50
+#define WRONGMAP_WINDOW_DEL 1000
 
 extern int total_dels;
 extern int total_dups;

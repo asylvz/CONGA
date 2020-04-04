@@ -11,7 +11,7 @@ extern long split_read_count;
 
 /* Maximum sequence/quality length */
 #define MAX_SEQ 1000
-#define SOFTCLIP_WRONGMAP_WINDOW 20
+#define SOFTCLIP_WRONGMAP_WINDOW 50
 
 
 /* Function Prototypes */

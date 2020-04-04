@@ -1,12 +1,12 @@
-SVDEPTH_VERSION := "0.1"
-SVDEPTH_UPDATE := "October 11, 2019"
+CONGA_VERSION := "0.2"
+CONGA_UPDATE := "April 4, 2020"
 BUILD_DATE := "$(shell date)"
 CC=gcc
-CFLAGS =  -O3 -g -I htslib -I sonic -DSVDEPTH_VERSION=\"$(SVDEPTH_VERSION)\" -DBUILD_DATE=\"$(BUILD_DATE)\" -DSVDEPTH_UPDATE=\"$(SVDEPTH_UPDATE)\"
+CFLAGS =  -O3 -g -I htslib -I sonic -DCONGA_VERSION=\"$(CONGA_VERSION)\" -DBUILD_DATE=\"$(BUILD_DATE)\" -DCONGA_UPDATE=\"$(CONGA_UPDATE)\"
 LDFLAGS = htslib/libhts.a sonic/libsonic.a -lz -lm -lpthread -llzma -lbz2 -lcurl
 SOURCES = svdepth.c cmdline.c common.c bam_data.c read_distribution.c free.c likelihood.c svs.c split_read.c
 OBJECTS = $(SOURCES:.c=.o)
-EXECUTABLE = svdepth
+EXECUTABLE = conga
 INSTALLPATH = /usr/local/bin/
 
 all: $(SOURCES) $(EXECUTABLE)
@@ -26,4 +26,4 @@ libs:
 	make -C sonic
 
 install:
-	cp SvDepth $(INSTALLPATH)
+	cp Conga $(INSTALLPATH)

@@ -13,6 +13,7 @@
 #define CHRX 22
 #define CHRY 23
 
+void init_rp_per_chr( bam_info* in_bam, parameters* param, int chr_index);
 void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index);
 void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index);
 #endif /* READ_DISTRIBUTION_H_ */
