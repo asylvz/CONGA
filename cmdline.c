@@ -13,28 +13,32 @@ int parse_command_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
-	static int load_sonic = 0;
+	static int load_sonic = 0, no_sr = 0, no_kmer = 0;
 	static int do_remap = 0;
 	char *min_rd_support = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
 	static struct option long_options[] = 
 	{
-			{"input"  , required_argument,   0, 'i'},
-			{"ref"    , required_argument,   0, 'f'},
-			{"dups"    , required_argument,   0, 'u'},
-			{"dels"    , required_argument,   0, 'd'},
-			{"help"   , no_argument,         0, 'h'},
-			{"version", no_argument,         0, 'v'},
-			{"min-sv-size"    , required_argument,	 0, 'l'},
+			{"rd", required_argument, 0, 'a'},
 			{"min-read-length"    , required_argument,	 0, 'b'},
+			{"dels"    , required_argument,   0, 'd'},
+			{"mq", required_argument, 0, 'e'},
+			{"ref"    , required_argument,   0, 'f'},
+			{"fastq"    , required_argument,   0, 'g'},
+			{"help"   , no_argument,         0, 'h'},
+			{"input"  , required_argument,   0, 'i'},
+			{"rp", required_argument, 0, 'j'},
+			{"min-sv-size"    , required_argument,	 0, 'l'},
+			{"sonic-info"    , required_argument,	 0, 'n'},
 			{"out"    , required_argument,	 0, 'o'},
 			{"sonic"    , required_argument,	 0, 's'},
-			{"sonic-info"    , required_argument,	 0, 'n'},
+			{"dups"    , required_argument,   0, 'u'},
+			{"version", no_argument,         0, 'v'},
+			{"exclude", required_argument, 0,'x'},
+			{"no-sr", no_argument, &no_sr, 1},
+			{"no-kmer", no_argument, &no_kmer, 1},
 			{"first-chrom", required_argument, 0, FIRST_CHROM},
 			{"last-chrom", required_argument, 0, LAST_CHROM},
-			{"rd", required_argument, 0, 'a'},
-			{"rp", required_argument, 0, 'j'},
-			{"mq", required_argument, 0, 'e'},
 			{0        , 0,                   0,  0 }
 	};
 
@@ -44,30 +48,49 @@ int parse_command_line( int argc, char** argv, parameters* params)
 		return 0;
 	}
 
-	while( ( o = getopt_long( argc, argv, "hvb:i:f:g:d:r:o:m:c:s:a:e:n:j:k:u", long_options, &index)) != -1)
+	while( ( o = getopt_long( argc, argv, "hvb:i:f:g:d:r:o:m:c:s:a:e:n:j:k:u:x", long_options, &index)) != -1)
 	{
 		switch( o)
 		{
-
-		case 'i':
-			set_str( &( params->bam_file), optarg);
+		case 'a':
+			set_str( &( min_rd_support), optarg);
 			break;
 
-		case 'f':
-			set_str( &( params->ref_genome), optarg);
+		case 'b':
+			params->min_read_length = atoi( optarg);
 			break;
 
 		case 'd':
 			set_str( &( params->del_file), optarg);
 			break;
 
-		case 'u':
-			set_str( &( params->dup_file), optarg);
+		case 'e':
+			set_str( &( min_mapping_qual), optarg);
 			break;
 
-		case 's':
-			set_str( &( params->sonic_file), optarg);
-			load_sonic = 1;
+		case 'f':
+			set_str( &( params->ref_genome), optarg);
+			break;
+
+		case 'g':
+			set_str( &( params->fastq), optarg);
+			break;
+
+		case 'h':
+			print_help();
+			return 0;
+			break;
+
+		case 'i':
+			set_str( &( params->bam_file), optarg);
+			break;
+
+		case 'j':
+			set_str( &( min_rp_support), optarg);
+			break;
+
+		case 'l':
+			params->min_sv_size = atoi( optarg);
 			break;
 
 		case 'n':
@@ -78,17 +101,23 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			set_str( &( params->outprefix), optarg);
 			break;
 
-		case 'l':
-			params->min_sv_size = atoi( optarg);
+		case 's':
+			set_str( &( params->sonic_file), optarg);
+			load_sonic = 1;
 			break;
 
-		case 'b':
-			params->min_read_length = atoi( optarg);
+		case 'u':
+			set_str( &( params->dup_file), optarg);
 			break;
 
-		case 'h':
-			print_help();
+		case 'v':
+			fprintf( stderr, "\n...CONGA....\n");
+			fprintf( stderr, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 			return 0;
+			break;
+
+		case 'x':
+			set_str( &( params->low_map_regions), optarg);
 			break;
 
 		case FIRST_CHROM:
@@ -98,26 +127,11 @@ int parse_command_line( int argc, char** argv, parameters* params)
 		case LAST_CHROM:
 			params->last_chrom = atoi(optarg);
 			break;
-
-		case 'a':
-			set_str( &( min_rd_support), optarg);
-			break;
-
-		case 'e':
-			set_str( &( min_mapping_qual), optarg);
-			break;
-
-		case 'j':
-			set_str( &( min_rp_support), optarg);
-			break;
-
-		case 'v':
-			fprintf( stderr, "\n...CONGA....\n");
-			fprintf( stderr, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
-			return 0;
-			break;
 		}
 	}
+
+	params->no_sr = no_sr;
+	params->no_kmer = no_kmer;
 
 	/* check if outprefix is given */
 	if( params->outprefix == NULL)

@@ -4,8 +4,8 @@
 #include "bam_data.h"
 #include "common.h"
 
-#define WINDOWSIZE 100
-#define WINDOWSLIDE 100
+#define WINDOWSIZE 1000
+#define WINDOWSLIDE 1000
 #define STDEVLIMIT 5.0
 
 /* Number of chromosomoes used in read depth analysis */

@@ -45,7 +45,7 @@ unsigned int hash_function_next( unsigned int prev_hash, unsigned int mask, cons
 
 unsigned int hash_function_ref( char *str)
 {
-	/* this strictly assumes HASHKMERLEN < 16 and is_kmer_valid is already called and retuned TRUE */
+	/* this strictly assumes HASHKMERLEN < 16 and is_kmer_valid is already called and returned TRUE */
 
 	int i = 0;
 	unsigned int val = 0; unsigned int numericVal = 0;
@@ -56,6 +56,7 @@ unsigned int hash_function_ref( char *str)
 	}
 	return val;
 }
+
 
 void init_hash_count(parameters *params)
 {
@@ -73,11 +74,9 @@ int is_kmer_valid (char *str){
 	if (l < HASHKMERLEN)
 		return 0;
 
-	for (i=0; i<HASHKMERLEN; i++)
+	for (i = 0; i < HASHKMERLEN; i++)
 		if (str[i] != 'A' && str[i] != 'C' && str[i] != 'G' && str[i] != 'T')
-		{
 			return 0;
-		}
 
 	return 1;
 }

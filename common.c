@@ -20,6 +20,7 @@ void init_params( parameters** params)
 	( *params)->ref_genome = NULL;
 	( *params)->dup_file = NULL;
 	( *params)->del_file = NULL;
+	( *params)->low_map_regions = NULL;
 	( *params)->sonic_file = NULL;
 	( *params)->this_sonic = NULL;
 	( *params)->outprefix = NULL;
@@ -33,6 +34,7 @@ void init_params( parameters** params)
 	( *params)->load_sonic = 0;
 	( *params)->sonic_info = NULL;
 	( *params)->ref_seq = NULL;
+	//( *params)->kmer_seq = NULL;
 	( *params)->hash_size = 0;
 	( *params)->min_read_length = 0;
 }
@@ -43,7 +45,6 @@ void get_working_directory(parameters *params)
 	char *directory;
 	char *prefix;
 	int i;
-
 
 	directory = strrchr(params->outprefix, '/');
 	prefix = NULL;
@@ -169,7 +170,7 @@ void set_str( char** target, char* source)
 	}
 	else
 	{
-		( *target) = NULL;
+		(*target) = NULL;
 	}
 }
 
@@ -347,4 +348,72 @@ void get_sample_name(bam_info* in_bam, char* header_text)
 
 	set_str( &( in_bam->sample_name), sample_name_buffer);
 	free( tmp_header);
+}
+
+char *substring(char *string, int position, int length)
+{
+	char *pointer;
+	int c;
+
+	pointer = (char*) getMem(sizeof(char) * length + 1);
+
+	if (pointer == NULL)
+	{
+		printf("Unable to allocate memory.\n");
+		exit(1);
+	}
+	//Adds one space character at the beginning for jellyfish -don't forget-
+
+	//*(pointer) = ' ';
+	for (c = 0 ; c < length ; c++)
+	{
+		*(pointer + c) = *(string + position - 1);
+		string++;
+	}
+
+	*(pointer + c) = '\0';
+
+	return pointer;
+}
+
+/* Return the complement of a base */
+char complement_char( char base)
+{
+	switch( base)
+	{
+	case 'A':
+		return 'T';
+		break;
+	case 'C':
+		return 'G';
+		break;
+	case 'G':
+		return 'C';
+		break;
+	case 'T':
+		return 'A';
+		break;
+	default:
+		return 'N';
+		break;
+	}
+	return 'X';
+}
+
+
+char* reverseComplement( char* str)
+{
+	int i;
+	char* str2 = NULL;
+	char tmp;
+
+	set_str( &str2, str);
+	reverse_string(str2);
+
+	for(i = 0; i < strlen(str2); i++)
+	{
+		tmp = complement_char(str2[i]);
+		str2[i] = tmp;
+	}
+	return str2;
 }

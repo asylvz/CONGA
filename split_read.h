@@ -10,9 +10,9 @@
 
 #include "common.h"
 
+#define MAX_SR_HIT 50000
 
 #define HASHKMERLEN 10
-#define MAX_SR_HIT 50000
 
 extern int *hash_table_count;
 extern int *hash_table_iter;

@@ -4,13 +4,12 @@
 #include <math.h>
 #include "likelihood.h"
 #include "free.h"
+#include "kmer.h"
 
 #define hashtable_size 10000
 int sv_count;
 int del_count;
 int dup_count;
-svs* all_svs_del;
-svs* all_svs_dup;
 
 int check_rp_intersection(svs arr[], int locus, int start_array, int end_array)
 {
@@ -45,7 +44,7 @@ void count_ReadPairs()
 	int del_present = 0, del_border_present = 0, dup_present = 0, all_rp = 0, del_left, del_right, dup_left, dup_right, del_left_out, del_right_out;
 	int del_start, del_end, i;
 
-	int del_interval[10000];
+	int del_interval[50000];
 
 	if(aPtr != NULL)
 	{
@@ -101,8 +100,8 @@ void count_ReadPairs()
 			del_start = all_svs_del[del_left].start;
 			del_end = all_svs_del[del_left].end;
 
-			if(splitRowPtr->locMapLeftEnd < del_start && splitRowPtr->locMapLeftEnd > del_start - WRONGMAP_WINDOW_DEL
-					&& splitRowPtr->locMapRightStart > del_end && splitRowPtr->locMapRightStart < del_end + WRONGMAP_WINDOW_DEL)
+			if(splitRowPtr->locMapLeftEnd <= del_start && splitRowPtr->locMapLeftEnd >= (del_start - WRONGMAP_WINDOW_DEL)
+					&& splitRowPtr->locMapRightStart >= del_end && splitRowPtr->locMapRightStart <= (del_end + WRONGMAP_WINDOW_DEL))
 			{
 				del_border_present++;
 				all_svs_del[del_left].border_rp++;
@@ -110,17 +109,34 @@ void count_ReadPairs()
 		}
 		splitRowPtr = splitRowPtr->next;
 	}
-
-	//fprintf(stderr,"%d DELS and %d DUPS found by split-reads\n", split_del_cnt, split_dup_cnt);
 	fprintf(stderr,"%d DELS (%d around breakpoints) and %d DUPS overlap with a known loci using %d bps wrong-map window\n", del_present, del_border_present, dup_present, WRONGMAP_WINDOW);
 }
 
+double lpoisson(int observed, double lambda)
+{
+	double penalty;
 
-void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], int count)
+	penalty = 0.01;
+	if  (lambda == 0.0)
+		lambda = penalty;
+	//fprintf(stderr,"%d - %f - %f - %f - %f - %f\n", observed, log(lambda), observed * log(lambda), lambda, lgamma(observed + 1), observed * log(lambda) - lambda - lgamma(observed + 1));
+	return observed * log(lambda) - lambda - lgamma(observed + 1);
+}
+
+
+void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], int count, float *mean_kmer, char* chr_name, char type)
 {
 	int gc_val, i;
+	double lhomo, lhete, lnone, score, expected_kmer;
 	float expectedReadCount = 0, lambda;
-	int totalReadCount = 0;
+	int totalReadCount = 0, totalReadCount_kmer;
+
+
+	if(arr[count].low_mappability == true)
+	{
+			arr[count].likelihood = 9999;
+			return;
+	}
 
 	for( i = arr[count].start; i < arr[count].end; i++)
 	{
@@ -128,24 +144,54 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		expectedReadCount += in_bam->mean_rd_per_gc[gc_val];
 		totalReadCount += in_bam->read_depth_per_chr[i];
 	}
-	arr[count].depth = (long) totalReadCount;
-	for( i = 0; i < 10; i++)
+	//arr[count].depth = (long) totalReadCount;
+
+	if(!params->no_kmer)
 	{
-		if( i > 0)
+		totalReadCount_kmer = 0;
+		expected_kmer = 0;
+		for(i = arr[count].start; i < arr[count].end; i += KMERWINDOWSLIDE)
 		{
-			lambda = (((float)i / ( float)2 ) * expectedReadCount);
-			arr[count].cnv_probability[i] =  exp( totalReadCount * log( lambda) - lambda - lgamma( totalReadCount + 1));
+			gc_val = (int)round ( sonic_get_gc_content(params->this_sonic, chr_name, i, i + KMERWINDOWSLIDE));
+			expected_kmer += mean_kmer[gc_val];
+			totalReadCount_kmer += calculate_kmers(params, chr_name, i, i + KMERWINDOWSLIDE);
 		}
-		else if( i == 0)
-		{
-			if(totalReadCount < (0.2) * expectedReadCount)
-				arr[count].cnv_probability[i] = 1;
-			else
-			{
-				lambda = ((0.01) * expectedReadCount);
-				arr[count].cnv_probability[i] = exp( totalReadCount * log( lambda) - lambda - lgamma( totalReadCount + 1));
-			}
-		}
+		arr[count].k_mer = totalReadCount_kmer;
+		arr[count].expected_kmer = expected_kmer;
+
+		lhomo = lpoisson(totalReadCount_kmer, 0.0);
+		lhete = lpoisson(totalReadCount_kmer, 0.5 * expected_kmer);
+		lnone = lpoisson(totalReadCount_kmer, expected_kmer);
+
+		if(type == DELETION)
+			all_svs_del[count].likelihood_kmer = max(lhomo, lhete) / lnone;
+		else
+			all_svs_dup[count].likelihood_kmer = max(lhomo, lhete) / lnone;
+
+		//fprintf(stderr,"%d - %lf - %lf\n", totalReadCount_kmer, expected_kmer, arr[count].likelihood_kmer);
+	}
+
+	if(type == DELETION)
+	{
+
+		lhomo = lpoisson(totalReadCount, 0.0);
+		lhete = lpoisson(totalReadCount, 0.5 * expectedReadCount);
+		lnone = lpoisson(totalReadCount, expectedReadCount);
+
+		score = max(lhomo, lhete) / lnone;
+		arr[count].likelihood = score;
+
+		//fprintf(stderr,"%s\t%d\t%d\t%.2lf\t%.2f\t%f\t%f\t%f\t%ld\t%.2f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].del_likelihood, all_svs_del[count].copy_number,lhomo, lhete,lnone, arr[count].depth, expectedReadCount);
+
+	}
+	else if(type == DUPLICATION)
+	{
+		lhomo = lpoisson(totalReadCount, 2 * expectedReadCount);
+		lhete = lpoisson(totalReadCount, 1.5 * expectedReadCount);
+		lnone = lpoisson(totalReadCount, expectedReadCount);
+
+		score = max(lhomo, lhete) / lnone;
+		arr[count].likelihood = score;
 	}
 }
 
@@ -169,53 +215,33 @@ void calculate_expected_CN( bam_info *in_bam, parameters *params, svs arr[], int
 }
 
 
-void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, char* chr_name)
+void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 {
 	int count;
 	int sv_cnt_dup = 0;
 	int sv_cnt_del = 0;
-	double maxRDlikelihoodDel, maxRDlikelihoodDup;
-	double sumLikelihoodDup, sumLikelihoodDel, sumLikelihoodNorm;
-	double epsilon = 1e-5; /* was 1e-200 before */
-
-	for( count = 0; count < del_count; count++)
-	{
-		sumLikelihoodNorm = all_svs_del[count].cnv_probability[2];
-		sumLikelihoodDel = all_svs_del[count].cnv_probability[0] + all_svs_del[count].cnv_probability[1];
-		sumLikelihoodDup = all_svs_del[count].cnv_probability[3] + all_svs_del[count].cnv_probability[4] +
-				all_svs_del[count].cnv_probability[5] + all_svs_del[count].cnv_probability[6];
-
-		all_svs_del[count].del_likelihood = sumLikelihoodDel / (double)( sumLikelihoodDup + sumLikelihoodNorm + epsilon);
-		fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].del_likelihood, all_svs_del[count].copy_number, all_svs_del[count].rp, all_svs_del[count].border_rp);
-	}
-
-	for( count = 0; count < dup_count; count++)
-	{
-		sumLikelihoodNorm = all_svs_dup[count].cnv_probability[2];
-		sumLikelihoodDel = all_svs_dup[count].cnv_probability[0] + all_svs_dup[count].cnv_probability[1];
-		sumLikelihoodDup = all_svs_dup[count].cnv_probability[3] + all_svs_dup[count].cnv_probability[4] +
-				all_svs_dup[count].cnv_probability[5] + all_svs_dup[count].cnv_probability[6];
-
-		all_svs_dup[count].dup_likelihood = sumLikelihoodDup / (double)( sumLikelihoodDel + sumLikelihoodNorm + epsilon);
-		fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].dup_likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp);
-	}
 
 	//qsort( all_svs, sv_count, sizeof( int), compare_start_pos);
 	for( count = 0; count < del_count; count++)
 	{
 		//if(all_svs_del[count].del_likelihood > params->rd_threshold && (all_svs_del[count].copy_number < 0.3 || all_svs_del[count].rp >= params->rp_support))
-		if(all_svs_del[count].del_likelihood > params->rd_threshold && all_svs_del[count].rp < 10 && all_svs_del[count].copy_number <= 0.4)
+		//if(all_svs_del[count].del_likelihood > params->rd_threshold && all_svs_del[count].rp < 10 && all_svs_del[count].copy_number <= 0.4)
+		fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\t%d\t%d\t%f\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].rp, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer, all_svs_del[count].expected_kmer);
+		if(all_svs_del[count].likelihood < 0.5 && all_svs_del[count].likelihood_kmer < 100)
 		{
-			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.1f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].del_likelihood, all_svs_del[count].copy_number, all_svs_del[count].rp);
+			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.1f\t%d\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer);
 			sv_cnt_del++;
 		}
 	}
 
 	for( count = 0; count < dup_count; count++)
 	{
-		if(all_svs_dup[count].dup_likelihood > (params->rd_threshold / 10) && all_svs_dup[count].rp >= params->rp_support)
+		//if(all_svs_dup[count].dup_likelihood > (params->rd_threshold / 10) && all_svs_dup[count].rp >= params->rp_support)
+		fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
+
+		if(all_svs_dup[count].likelihood < 0.5)
 		{
-			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].dup_likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp);
+			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
 			sv_cnt_dup++;
 		}
 	}
@@ -226,24 +252,86 @@ void output_SVs( parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fpSVs, ch
 	total_dups += sv_cnt_dup;
 }
 
-void find_depths( bam_info *in_bam, parameters *params)
+void find_depths( bam_info *in_bam, parameters *params, char* chr_name, int chr_index)
 {
 	int count;
+	float mean_kmer[101];
+
+	if(!params->no_kmer)
+		calc_mean_kmer(params, chr_name, chr_index, &mean_kmer[0]);
 
 	for( count = 0; count < del_count; count++)
 	{
 		calculate_expected_CN( in_bam, params, all_svs_del, count);
-		calculate_likelihood_CNV( in_bam, params, all_svs_del, count);
+		calculate_likelihood_CNV( in_bam, params, all_svs_del, count,  &mean_kmer[0], chr_name, DELETION);
 	}
 	for( count = 0; count < dup_count; count++)
 	{
 		calculate_expected_CN( in_bam, params, all_svs_dup, count);
-		calculate_likelihood_CNV( in_bam, params, all_svs_dup, count);
+		calculate_likelihood_CNV( in_bam, params, all_svs_dup, count, &mean_kmer[0], chr_name, DUPLICATION);
 	}
 }
 
 
-void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fp_SVs, char* chr_name)
+void count_kmers_find_likelihoods(parameters *params, char* chr_name, int chr_index)
+{
+	int count, var_size, i;
+	int return_value = -1;
+	int max_size = params->this_sonic->chromosome_lengths[chr_index] - 1001;
+	int k_mer_count = 0, rand_loci;
+	long sum_kmers = 0;
+	double expected_kmer_per_base, lhomo, lhete, lnone, observed, expected_kmer;
+	float mean_kmer[101];
+	int gc_val;
+	int totalReadCount = 0;
+
+	//Calculate expected k_mer
+	calc_mean_kmer(params, chr_name, chr_index, &mean_kmer[0]);
+
+	for( count = 0; count < del_count; count ++)
+	{
+		totalReadCount = 0;
+		expected_kmer = 0;
+
+		for(i = all_svs_del[count].start; i < all_svs_del[count].end; i+= KMERWINDOWSIZE)
+		{
+			gc_val = ( int)round ( sonic_get_gc_content(params->this_sonic, chr_name, i, i + KMERWINDOWSLIDE));
+			expected_kmer += mean_kmer[gc_val];
+			totalReadCount += calculate_kmers(params, chr_name, i, i + KMERWINDOWSLIDE);
+		}
+
+
+		//k_mer_count = calculate_kmers(params, chr_name, all_svs_del[count].start, all_svs_del[count].end);
+		all_svs_del[count].k_mer = totalReadCount;
+		var_size = all_svs_del[count].end - all_svs_del[count].start;
+		observed = (double) k_mer_count * ((double) KMERWINDOWSLIDE / var_size);
+
+		lhomo = lpoisson(totalReadCount, 0.0);
+		lhete = lpoisson(totalReadCount, 0.5 * expected_kmer);
+		lnone = lpoisson(totalReadCount, expected_kmer);
+
+		all_svs_del[count].likelihood_kmer = max(lhomo, lhete) / lnone;
+
+		//fprintf(stderr,"%d - %lf - %lf\n", totalReadCount, expected_kmer, all_svs_del[count].del_likelihood_kmer);
+	}
+
+	for( count = 0; count < dup_count; count++)
+	{
+		k_mer_count = calculate_kmers(params, chr_name, all_svs_dup[count].start, all_svs_dup[count].end);
+		all_svs_dup[count].k_mer = k_mer_count;
+		var_size = all_svs_dup[count].end - all_svs_dup[count].start;
+		observed = (double) k_mer_count * ((double) KMERWINDOWSLIDE / var_size);
+
+		lhomo = lpoisson(observed, 2 * expected_kmer_per_base);
+		lhete = lpoisson(observed, 1.5 * expected_kmer_per_base);
+		lnone = lpoisson(observed, expected_kmer_per_base);
+
+		all_svs_dup[count].likelihood_kmer = max(lhomo, lhete) / lnone;
+	}
+}
+
+
+void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fp_SVs, char* chr_name, int chr_index)
 {
 	sv_count = 0;
 	del_count = 0;
@@ -259,11 +347,40 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 
 	sv_count = del_count + dup_count;
 
-	count_ReadPairs();
+	if(params->low_map_regions != NULL)
+	{
+		//fprintf(stderr,"Loading Low mappability regions\n");
+		check_low_mappability(params, all_svs_del, all_svs_dup, chr_name, del_count, dup_count);
+	}
 
-	find_depths(in_bam, params);
-	output_SVs(params, fp_del, fp_dup, fp_SVs, chr_name);
+	if(!params->no_sr)
+	{
+		count_ReadPairs();
+		free_splits(in_bam);
+	}
 
-	free_SVs(all_svs_del,del_count);
-	free_SVs(all_svs_dup,dup_count);
+	if(!params->no_kmer)
+	{
+		// Read the fastq file
+
+		fprintf(stderr,"Reading k-mer counts\n");
+		read_kmer_jellyfish(params);
+	}
+
+	fprintf(stderr,"Finding depths\n");
+	find_depths(in_bam, params, chr_name, chr_index);
+	free( in_bam->read_depth_per_chr);
+	if(!params->no_kmer)
+		free_hash_table_kmer(params);
+
+	//fprintf(stderr,"Counting k-mers (hash size=%ld)\n", params->hash_size_kmer);
+	//count_kmers_find_likelihoods(params, chr_name, chr_index);
+	//free_hash_table_kmer(params);
+
+	//Filter Low Mappability Regions
+
+	output_SVs(params, fp_SVs, fp_del, fp_dup);
+
+	free_SVs(all_svs_del, del_count);
+	free_SVs(all_svs_dup, dup_count);
 }

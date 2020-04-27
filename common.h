@@ -8,9 +8,11 @@
 #include <stdbool.h>
 #include "sonic/sonic.h"
 
-//#define MAIN_DELETION_CLUSTER
+
 #define DELETION 'D'
 #define DUPLICATION 'E'
+
+#define KMER 31
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -58,7 +60,9 @@ typedef struct SplitsInfo
 typedef struct _params
 {
 	char* ref_genome; /* path to reference genome - fasta */
+	char* fastq;
 	char* outdir;
+	char *low_map_regions; /*Regions with low mappability is excluded from consideration - a BED input is required */
 	char *dup_file;
 	char *del_file;
 	char* bam_file; /* the actual list that holds all bam file paths after tokenization */
@@ -71,9 +75,13 @@ typedef struct _params
 	int mq_threshold; /* Minimum mapping quality */
 	int rp_support; /* Minimum number of read-pairs to designate a variant as PRECISE */
 	char *ref_seq; /* reference sequence per chromosome */
+	char *kmer_seq; /* reference sequence per chromosome */
 	int hash_size; /* size of the hash table for split read mapping */
+	long int hash_size_kmer; /* size of the hash table for split read mapping */
 	char *sonic_file; /* SONIC file name */
 	int load_sonic; /*load SONIC file*/
+	int no_sr; /* Don't use split-read */
+	int no_kmer; /* Don't use k-mers */
 	char *sonic_info; /* SONIC reference information string for building */
 	sonic *this_sonic; /* SONIC */
 } parameters;
@@ -83,7 +91,7 @@ typedef struct _bam_info
 	int read_count; /* total number of reads in this library */
 	short* read_depth_per_chr; /* read depth */
 	float mean;
-	float mean_rd_per_gc[101]; /* GC percentages, i.e., GC[13]=323 means 343 windows have GC of 13% */
+	float mean_rd_per_gc[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
 
 	htsFile* bam_file; /* file pointer to the BAM file */
 	hts_idx_t* bam_file_index;
@@ -138,6 +146,8 @@ void get_working_directory(parameters *params);
 int is_dna_letter( char base);
 int is_proper( int flag);
 void get_sample_name(bam_info* in_bam, char* header_text);
+char *substring(char *string, int position, int length);
+char* reverseComplement( char* str);
 
 // Memory allocation/tracking functions
 void* getMem( size_t size);

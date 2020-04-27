@@ -19,5 +19,4 @@ void load_bam( bam_info* in_bam, char* path);
 void print_bam( bam_info* in_bam);
 void read_bam( bam_info* in_bam, parameters *params);
 
-
 #endif

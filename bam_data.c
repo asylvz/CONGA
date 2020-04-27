@@ -3,9 +3,10 @@
 #include "free.h"
 #include "likelihood.h"
 #include "split_read.h"
+#include "kmer.h"
+#include "mhash.h"
 
 struct SplitsInfo *all_split_reads = NULL;
-
 
 SplitRow *createSplitRow(int locMapLeftStart, int locMapLeftEnd, char orientationLeft,
 		int locMapRightStart, int locMapRightEnd, char orientationRight, char svType)
@@ -75,7 +76,7 @@ SplitRow *determine_SvType( splitRead *ptrSplitRead, posMapSplitRead *ptrPosMapS
 int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 {
 	float is_satellite = 0.0;
-	SplitRow *newRow = NULL;
+	SplitRow *newRow;
 	posMapSplitRead *ptrPosMapSoftClip = NULL;
 
 	all_split_reads = ( SplitsInfo *) getMem( sizeof( struct SplitsInfo));
@@ -91,6 +92,7 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 			is_satellite = sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrSoftClip->pos, ptrSoftClip->pos + 1 ) +
 					sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrPosMapSoftClip->posMap, ptrPosMapSoftClip->posMap + 1);
 
+			newRow = NULL;
 			if ( is_satellite == 0 && ptrSoftClip->qual > params->mq_threshold && strcmp(ptrSoftClip->chromosome_name, params->this_sonic->chromosome_names[chr_index]) == 0
 					&& ptrPosMapSoftClip->mapq > params->mq_threshold && ptrSoftClip->pos > 0 && ptrPosMapSoftClip->posMap > 0
 					&& ptrSoftClip->pos < params->this_sonic->chromosome_lengths[chr_index] && ptrPosMapSoftClip->posMap < params->this_sonic->chromosome_lengths[chr_index])
@@ -147,33 +149,78 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 	return all_split_reads->size;
 }
 
-void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index)
+int write_sequences(parameters *params, bam1_t* bam_alignment, FILE* fp, int base_count)
+{
+	char str[1024];
+	int i, k = 0;
+	int hash[4];
+
+	bam1_core_t bam_alignment_core = bam_alignment->core;
+
+	if( bam_alignment_core.pos == 0)
+		return -1;
+
+	char seed[KMER + 1];
+
+	for(i = 0; i < bam_alignment_core.l_qseq; i++)
+	{
+		if( bam_seqi( bam_get_seq( bam_alignment), i) == 1)
+			str[k] = 'A';
+		else if( bam_seqi( bam_get_seq( bam_alignment), i) == 2)
+			str[k] = 'C';
+		else if(bam_seqi( bam_get_seq( bam_alignment), i) == 4)
+			str[k] = 'G';
+		else if( bam_seqi( bam_get_seq( bam_alignment), i) == 8)
+			str[k] = 'T';
+		//else //In case of N...
+		//return -1;
+		k++;
+	}
+	base_count += k;
+	str[k] = '\0';
+
+	if(str != NULL)
+		fprintf(fp,"%s",str);
+
+	return base_count;
+}
+
+void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* base_count_bam )
 {
 	bam1_core_t bam_alignment_core;
 	bam1_t* bam_alignment = bam_init1();
-
+	FILE *fpSeq = NULL;
+	char seq_file[MAX_SEQ];
 	int return_type;
+	int cnt_reads = 0;
+
+	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
+	fpSeq = safe_fopen( seq_file,"w");
+	fprintf(fpSeq,">Sequences in your bam\n");
 
 	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
 		bam_alignment_core = bam_alignment->core;
 
-		if( sonic_is_satellite( params->this_sonic, params->this_sonic->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0
-				&& bam_alignment_core.qual > params->mq_threshold && is_proper( bam_alignment_core.flag)
-		&& bam_alignment_core.l_qseq > params->min_read_length)
+		if(sonic_is_satellite( params->this_sonic, params->this_sonic->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0
+				&& bam_alignment_core.qual > params->mq_threshold && is_proper( bam_alignment_core.flag))
 		{
-			if( bam_alignment_core.l_qseq > params->min_read_length)
+			if( !params->no_sr && bam_alignment_core.l_qseq > params->min_read_length)
 				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
 
-			if( return_type == -1)
-				continue;
 		}
+		/*Write to a text file*/
+		if(!params->no_kmer)
+			(*base_count_bam) = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
+
+		cnt_reads++;
 
 		/* Increase the read depth and read count for RD filtering */
 		in_bam->read_depth_per_chr[bam_alignment_core.pos]++;
 		in_bam->read_count++;
 	}
-	//fprintf(stderr,"\nThere are %ld split reads in bam\n",split_read_count);
+	fprintf(stderr," (There are %d reads)\n", cnt_reads);
+	fclose(fpSeq);
 	bam_destroy1( bam_alignment);
 }
 
@@ -181,21 +228,24 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index)
 void read_bam( bam_info* in_bam, parameters *params)
 {
 	int i, bam_index, chr_index, chr_index_bam, return_value, not_in_bam = 0;
-	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ];
+	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ], cmd_jelly[MAX_SEQ];
 	FILE *fpDel = NULL, *fpDup = NULL, *fpSVs = NULL;
+	int base_count_bam = 0;
 
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
-	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\n");
+	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
 
 	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output Del file: %s\n", svfile_del);
 	fpDel = safe_fopen( svfile_del,"w");
+	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tREAD_PAIR_BORDER\tKMER_COUNT\tKMER_PER_BASE\n");
 
 	sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 	fpDup = safe_fopen( svfile_dup,"w");
+	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
 
 
 	/* HTS implementation */
@@ -215,7 +265,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 	/* Extract the Sample Name from the header text */
 	get_sample_name( in_bam, in_bam->bam_header->text);
 
-
 	for( chr_index = 0; chr_index < params->this_sonic->number_of_chromosomes; chr_index++)
 	{
 		if (chr_index < params->first_chrom)
@@ -227,8 +276,8 @@ void read_bam( bam_info* in_bam, parameters *params)
 			continue;
 		}
 
-		//if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
-			//continue;
+		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
+			continue;
 
 
 		chr_index_bam = find_chr_index_bam( params->this_sonic->chromosome_names[chr_index], in_bam->bam_header);
@@ -253,17 +302,20 @@ void read_bam( bam_info* in_bam, parameters *params)
 		/* Initialize the read depth and read count */
 		init_rd_per_chr( in_bam, params, chr_index);
 
-		fprintf( stderr, "\nReading the Reference Genome");
-		readReferenceSeq(params, chr_index);
+		if(!params->no_sr)
+		{
+			fprintf( stderr, "\nReading the Reference Genome");
+			readReferenceSeq(params, chr_index);
+		}
 
 		/* Read bam file for this chromosome */
-		count_reads_bam( in_bam, params, chr_index);
+		fprintf(stderr,"\nCounting Reads in the BAM file");
+		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
 
 		free_hash_table(params);
 
 		/* Mean value (mu) calculation */
 		calc_mean_per_chr( params, in_bam, chr_index);
-
 
 		/* Free the bam related files */
 		sam_itr_destroy( in_bam->iter);
@@ -271,15 +323,46 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if( not_in_bam == 1)
 			continue;
 
+		/*Run JellyFish */
+		if(!params->no_kmer)
+		{
+			//-C needed?
+			fprintf(stderr, "\nRunning Jellyfish (creating %s%s_seqs.fa)\n", params->outdir, params->outprefix);
+			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish count -m %d -s 200M -C -t 4 %s%s_seqs.fa --out-counter-len 1", KMER, params->outdir, params->outprefix);
+			int return_value = system(cmd_jelly);
+
+			if(return_value != -1)
+			{
+				sprintf(cmd_jelly, "%s%s_seqs.fa", params->outdir, params->outprefix);
+				remove(cmd_jelly);
+			}
+			else
+			{
+				fprintf(stderr, "Problem in running Jellyfish (count)\n");
+				exit(1);
+			}
+
+			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish dump -L 5 mer_counts.jf > mer_counts.fa");
+			return_value = system(cmd_jelly);
+
+			if(return_value != -1)
+				remove("mer_counts.jf");
+			else
+			{
+				fprintf(stderr, "Problem in running Jellyfish (dump)\n");
+				exit(1);
+			}
+		}
+
 		//Load Split-Reads
-		read_SplitReads(in_bam->listSplitRead, params, chr_index);
+		if(!params->no_sr)
+		{
+			fprintf(stderr, "Loading Split-Reads\n");
+			read_SplitReads(in_bam->listSplitRead, params, chr_index);
+		}
 
 		//fprintf( stderr, "\nLikelihood Estimation\n");
-		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, in_bam->bam_header->target_name[chr_index_bam]);
-
-		/* Free the read depth array and split reads*/
-		free_splits(in_bam);
-		free( in_bam->read_depth_per_chr);
+		find_SVs( in_bam, params, fpDel, fpDup, fpSVs, in_bam->bam_header->target_name[chr_index_bam], chr_index);
 	}
 
 	/* Close the BAM file */

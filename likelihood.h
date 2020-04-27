@@ -20,5 +20,5 @@
 extern int total_dels;
 extern int total_dups;
 
-void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fp_SVs, char* chr_name);
+void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup, FILE* fp_SVs, char* chr_name, int chr_index);
 #endif

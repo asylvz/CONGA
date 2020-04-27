@@ -8,6 +8,8 @@
 #include "free.h"
 #include "read_distribution.h"
 #include "split_read.h"
+#include "mhash.h"
+#include "kmer.h"
 
 FILE *logFile = NULL;
 int total_dels = 0;
@@ -29,6 +31,20 @@ int main( int argc, char** argv)
 	/* Keeping simple logs in conga.log file */
 	logFile = safe_fopen ("conga.log", "w");
 	fprintf( logFile, "#CreationDate=%d.%d.%d\n\n", timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday);
+/*
+	char x[100] = ">;7>?>2?>?>?@@?@A;0?(B@D@@C@??>9+@B()+B;D>2A9@<2'>@(9='(7'=D;,0<A,=%081-*5*";
+
+	int sum = 0;
+	for(i = 0; i < strlen(x); i++)
+	{
+		int b = x[i] - 33;
+		fprintf(stderr,"%c - %d - %lf\n", x[i], b, pow(10,(double) (-b)/10));
+		sum += x[i] - 33;
+	}
+
+	double a = pow(10,(double) (-((double) sum/i))/10);
+	fprintf(stderr,"%d\t%d\t%f\n",sum, sum/i, a);*/
+
 
 	/* Set program parameters */
 	init_params( &params);
@@ -50,7 +66,8 @@ int main( int argc, char** argv)
 	in_bam->sample_name = NULL;
 	in_bam->listSplitRead = NULL;
 
-	init_hash_count( params);
+	if(!params->no_sr)
+		init_hash_count( params);
 
 	//Find the depth of SVs
 	read_bam(in_bam, params);
@@ -62,8 +79,8 @@ int main( int argc, char** argv)
 	getlogin_r( username, (MAX_SEQ - 1));
 	fprintf( stderr, "\nThank you %s. I found %d DELs and %d DUPs. Hope to see you again...\n", username, total_dels, total_dups);
 
-	fclose( logFile);
+	fclose(logFile);
 
-	free( username);
+	free(username);
 	return EXIT_SUCCESS;
 }

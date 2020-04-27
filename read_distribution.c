@@ -42,7 +42,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 
 void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 {
-	int lib_index, i, gc_val = -1, window_per_gc[101];
+	int lib_index, i, gc_val = -1, window_per_gc[101], end;
 	long rd_per_gc[101];
 
 	calc_mu_per_chr( in_bam, params->this_sonic->chromosome_lengths[chr_index]);
@@ -56,7 +56,12 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 
 	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i++)
 	{
-		gc_val = (int) round ( sonic_get_gc_content( params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, i + WINDOWSLIDE));
+		if((i + WINDOWSLIDE) < params->this_sonic->chromosome_lengths[chr_index])
+			end = i + WINDOWSLIDE;
+		else
+			end = params->this_sonic->chromosome_lengths[chr_index];
+
+		gc_val = (int) round ( sonic_get_gc_content( params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
 		rd_per_gc[gc_val] += ( long) in_bam->read_depth_per_chr[i];
 		window_per_gc[gc_val]++;
 	}
@@ -68,5 +73,6 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 		if( isnanf( in_bam->mean_rd_per_gc[i]) || isinff( ( in_bam->mean_rd_per_gc[i])) == -1
 				|| isinff( ( in_bam->mean_rd_per_gc[i])) == 1 )
 			in_bam->mean_rd_per_gc[i] = 0;
+		//fprintf(stderr,"GC = %d - RD=%ld\tWINDOW=%d\tMEAN=%f\n", i, rd_per_gc[i],window_per_gc[i], in_bam->mean_rd_per_gc[i]);
 	}
 }
