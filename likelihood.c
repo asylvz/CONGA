@@ -42,10 +42,12 @@ void count_ReadPairs()
 
 	int split_del_cnt = 0, split_dup_cnt = 0;
 	int del_present = 0, del_border_present = 0, dup_present = 0, all_rp = 0, del_left, del_right, dup_left, dup_right, del_left_out, del_right_out;
-	int del_start, del_end, i;
+	int del_start, del_end, dup_start, dup_end, i;
 
 	int del_interval[50000];
+	int dup_interval[50000];
 
+	/*
 	if(aPtr != NULL)
 	{
 		splitRowPtr = aPtr->head;
@@ -91,25 +93,65 @@ void count_ReadPairs()
 		}
 	}
 
-	splitRowPtr = aPtr->head;
-	while (splitRowPtr != NULL)
+	 */
+	if(aPtr != NULL)
 	{
-		for(i = 0; i < del_present; i++)
+		splitRowPtr = aPtr->head;
+		while (splitRowPtr != NULL)
 		{
-			del_left = del_interval[i];
-			del_start = all_svs_del[del_left].start;
-			del_end = all_svs_del[del_left].end;
-
-			if(splitRowPtr->locMapLeftEnd <= del_start && splitRowPtr->locMapLeftEnd >= (del_start - WRONGMAP_WINDOW_DEL)
-					&& splitRowPtr->locMapRightStart >= del_end && splitRowPtr->locMapRightStart <= (del_end + WRONGMAP_WINDOW_DEL))
+			if(splitRowPtr->svType == DUPLICATION)
 			{
-				del_border_present++;
-				all_svs_del[del_left].border_rp++;
+				//fprintf(stderr,"start - ");
+				//dup_left = check_rp_intersection(all_svs_dup, splitRowPtr->locMapLeftStart, 0, dup_count);
+				//dup_right = check_rp_intersection(all_svs_dup, splitRowPtr->locMapRightStart, 0, dup_count);
+				//fprintf(stderr,"%d - %d\n", dup_left, dup_right);
+
+				//if((dup_left != -1) && (dup_left == dup_right))
+				//{
+				for(i = 0; i < dup_count; i++)
+				{
+					dup_start = all_svs_dup[i].start;
+					dup_end = all_svs_dup[i].end;
+
+					if(splitRowPtr->locMapLeftEnd >= (dup_start - WRONGMAP_WINDOW_DEL) && splitRowPtr->locMapLeftEnd <= (dup_end + WRONGMAP_WINDOW_DEL)
+							&& splitRowPtr->locMapRightStart <= (dup_end + WRONGMAP_WINDOW_DEL) && splitRowPtr->locMapRightStart >= (dup_start - WRONGMAP_WINDOW_DEL))
+					{
+						dup_present++;
+						all_svs_dup[i].rp++;
+					}
+				}
+				//}
 			}
+			else if(splitRowPtr->svType == DELETION)
+			{
+				//fprintf(stderr,"start2 - ");
+				//del_left = check_rp_intersection(all_svs_del, splitRowPtr->locMapLeftStart, 0, del_count);
+				//del_right = check_rp_intersection(all_svs_del, splitRowPtr->locMapRightStart, 0, del_count);
+				//fprintf(stderr,"%d - %d\n", del_left, del_right);
+				//if((del_left != -1) && (del_right == del_left))
+				//{
+				//del_left = del_interval[i];
+				for(i = 0; i < del_count; i++)
+				{
+					del_start = all_svs_del[i].start;
+					del_end = all_svs_del[i].end;
+
+					if(splitRowPtr->locMapLeftEnd <= (del_start + WRONGMAP_WINDOW) && splitRowPtr->locMapLeftEnd >= (del_start - WRONGMAP_WINDOW_DEL)
+							&& splitRowPtr->locMapRightStart >= (del_end - WRONGMAP_WINDOW) && splitRowPtr->locMapRightStart <= (del_end + WRONGMAP_WINDOW_DEL))
+					{
+						//fprintf(stderr,"Loci: %d - %d\tRead: %d - %d\n", del_start, del_end, splitRowPtr->locMapLeftEnd, splitRowPtr->locMapRightStart);
+						del_border_present++;
+						all_svs_del[i].border_rp++;
+					}
+				}
+				//}
+			}
+			else
+				fprintf(stderr,"ERROR %c", splitRowPtr->svType);
+			splitRowPtr = splitRowPtr->next;
 		}
-		splitRowPtr = splitRowPtr->next;
 	}
-	fprintf(stderr,"%d DELS (%d around breakpoints) and %d DUPS overlap with a known loci using %d bps wrong-map window\n", del_present, del_border_present, dup_present, WRONGMAP_WINDOW);
+	fprintf(stderr,"%d DELS and %d DUPS overlap with a known loci using %d bps wrong-map window\n", del_border_present, dup_present, WRONGMAP_WINDOW_DEL);
 }
 
 double lpoisson(int observed, double lambda)
@@ -128,21 +170,24 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 {
 	int gc_val, i;
 	double lhomo, lhete, lnone, score, expected_kmer;
-	float expectedReadCount = 0, lambda;
-	int totalReadCount = 0, totalReadCount_kmer;
+	float expectedReadCount = 0, expectedReadCountLQ = 0, lambda;
+	int totalReadCount = 0, totalReadCount_kmer, totalReadCount_lq = 0;
 
 
 	if(arr[count].low_mappability == true)
 	{
-			arr[count].likelihood = 9999;
-			return;
+		arr[count].likelihood = 9999;
+		return;
 	}
 
 	for( i = arr[count].start; i < arr[count].end; i++)
 	{
 		gc_val = ( int)round ( sonic_get_gc_content(params->this_sonic, arr[count].chr_name, i, i + WINDOWSLIDE));
-		expectedReadCount += in_bam->mean_rd_per_gc[gc_val];
-		totalReadCount += in_bam->read_depth_per_chr[i];
+		expectedReadCount += in_bam->expected_rd[gc_val];
+		totalReadCount += in_bam->rd[i];
+
+		expectedReadCountLQ += in_bam->expected_rd_lq[gc_val];
+		totalReadCount_lq += in_bam->rd_lq[i];
 	}
 	//arr[count].depth = (long) totalReadCount;
 
@@ -181,14 +226,31 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		score = max(lhomo, lhete) / lnone;
 		arr[count].likelihood = score;
 
+
+		lhomo = lpoisson(totalReadCount + totalReadCount_lq, 0.0);
+		lhete = lpoisson(totalReadCount + totalReadCount_lq, 0.5 * expectedReadCountLQ);
+		lnone = lpoisson(totalReadCount + totalReadCount_lq, expectedReadCountLQ);
+
+		score = max(lhomo, lhete) / lnone;
+		arr[count].likelihood_lq = score;
+
+
 		//fprintf(stderr,"%s\t%d\t%d\t%.2lf\t%.2f\t%f\t%f\t%f\t%ld\t%.2f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].del_likelihood, all_svs_del[count].copy_number,lhomo, lhete,lnone, arr[count].depth, expectedReadCount);
 
 	}
 	else if(type == DUPLICATION)
 	{
-		lhomo = lpoisson(totalReadCount, 2 * expectedReadCount);
-		lhete = lpoisson(totalReadCount, 1.5 * expectedReadCount);
-		lnone = lpoisson(totalReadCount, expectedReadCount);
+		lhomo = lpoisson(totalReadCount + totalReadCount_lq, 2 * expectedReadCountLQ);
+		lhete = lpoisson(totalReadCount + totalReadCount_lq, 1.5 * expectedReadCountLQ);
+		lnone = lpoisson(totalReadCount + totalReadCount_lq, expectedReadCountLQ);
+
+		score = max(lhomo, lhete) / lnone;
+		arr[count].likelihood = score;
+
+
+		lhomo = lpoisson(totalReadCount_lq + totalReadCount, 2 * expectedReadCount);
+		lhete = lpoisson(totalReadCount_lq + totalReadCount, 1.5 * expectedReadCount);
+		lnone = lpoisson(totalReadCount_lq + totalReadCount, expectedReadCount);
 
 		score = max(lhomo, lhete) / lnone;
 		arr[count].likelihood = score;
@@ -206,9 +268,9 @@ void calculate_expected_CN( bam_info *in_bam, parameters *params, svs arr[], int
 	for( i = arr[count].start; i < arr[count].end; i++)
 	{
 		gc_val = ( int)round ( sonic_get_gc_content(params->this_sonic, arr[count].chr_name, i, i + WINDOWSLIDE));
-		expectedReadCount += in_bam->mean_rd_per_gc[gc_val];
+		expectedReadCount += in_bam->expected_rd[gc_val];
 
-		totalReadCount += ( float)in_bam->read_depth_per_chr[i];
+		totalReadCount += ( float)in_bam->rd[i];
 
 	}
 	arr[count].copy_number = ( float)( 2 * totalReadCount) / ( float)( expectedReadCount);
@@ -226,10 +288,10 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 	{
 		//if(all_svs_del[count].del_likelihood > params->rd_threshold && (all_svs_del[count].copy_number < 0.3 || all_svs_del[count].rp >= params->rp_support))
 		//if(all_svs_del[count].del_likelihood > params->rd_threshold && all_svs_del[count].rp < 10 && all_svs_del[count].copy_number <= 0.4)
-		fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\t%d\t%d\t%f\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].rp, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer, all_svs_del[count].expected_kmer);
-		if(all_svs_del[count].likelihood < 0.5 && all_svs_del[count].likelihood_kmer < 100)
+		fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\t%.2lf\t%d\t%d\t%f\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].likelihood_lq, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer, all_svs_del[count].expected_kmer);
+		if(all_svs_del[count].likelihood_lq < 1 && all_svs_del[count].likelihood_kmer < 100)
 		{
-			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.1f\t%d\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer);
+			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%lf\t%.1f\t%f\t%d\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood, all_svs_del[count].copy_number, all_svs_del[count].likelihood_lq, all_svs_del[count].border_rp, all_svs_del[count].k_mer, all_svs_del[count].likelihood_kmer);
 			sv_cnt_del++;
 		}
 	}
@@ -237,12 +299,23 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 	for( count = 0; count < dup_count; count++)
 	{
 		//if(all_svs_dup[count].dup_likelihood > (params->rd_threshold / 10) && all_svs_dup[count].rp >= params->rp_support)
-		fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\t%.2f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
+		fprintf(fp_dup,"%s\t%d\t%d\t%.2lf\t%.2f%.2f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_lq, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
 
-		if(all_svs_dup[count].likelihood < 0.5)
+		if(!params->no_sr)
 		{
-			fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
-			sv_cnt_dup++;
+			if(all_svs_dup[count].likelihood < 1 && all_svs_dup[count].rp > 5)
+			{
+				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
+				sv_cnt_dup++;
+			}
+		}
+		else
+		{
+			if(all_svs_dup[count].likelihood < 1)
+			{
+				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%.1f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood, all_svs_dup[count].copy_number, all_svs_del[count].likelihood_lq, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
+				sv_cnt_dup++;
+			}
 		}
 	}
 
@@ -369,13 +442,12 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 
 	fprintf(stderr,"Finding depths\n");
 	find_depths(in_bam, params, chr_name, chr_index);
-	free( in_bam->read_depth_per_chr);
+
+	free( in_bam->rd);
+
 	if(!params->no_kmer)
 		free_hash_table_kmer(params);
 
-	//fprintf(stderr,"Counting k-mers (hash size=%ld)\n", params->hash_size_kmer);
-	//count_kmers_find_likelihoods(params, chr_name, chr_index);
-	//free_hash_table_kmer(params);
 
 	//Filter Low Mappability Regions
 

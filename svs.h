@@ -22,6 +22,7 @@ typedef struct _svs
 	float copy_number;
 	double likelihood;
 	double likelihood_kmer;
+	double likelihood_lq;
 	//double cnv_probability[10];
 	//double cnv_score;
 	bool low_mappability;

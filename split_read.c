@@ -12,7 +12,7 @@
 #define HASH_COUNT 0
 #define HASH_BUILD 1
 
-#define SR_LOOKAHEAD 15000
+#define SR_LOOKAHEAD 100000
 
 
 int **hash_table_array;
@@ -137,7 +137,7 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 		}
 	}
 
-	if( posMapSize < 11)
+	if( posMapSize < MAX_MAPPING)
 	{
 		strRev = ( char *)getMem( (str_length + 1) * sizeof( char));
 		for( i = 0; i < str_length; i++)
@@ -184,14 +184,14 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 					reverseMatch = 1;
 				}
 			}
-			if( posMapSize > 10)
+			if( posMapSize > MAX_MAPPING)
 				break;
 		}
 		freeMem( strRev, str_length+1);
 	}
 
-
-	if( posMapSize < 12 && posMapSize > 0)
+	//posMapSize < 12 &&
+	if( posMapSize > 0 && posMapSize < MAX_MAPPING)
 	{
 		for( i = 0; i < posMapSize; i++)
 		{
@@ -199,10 +199,10 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 			tmpSplitMap->posMap = posMap[i];
 			tmpSplitMap->orient = orient[i];
 
-			if( posMapSize < 11)
-				tmpSplitMap->mapq = 60 / posMapSize;
-			else
-				posMapSize = 0;
+			//if( posMapSize < 11)
+			tmpSplitMap->mapq = 60 / posMapSize;
+			//else
+			//posMapSize = 0;
 
 			tmpSplitMap->next = returnPtr;
 			returnPtr = tmpSplitMap;
@@ -217,7 +217,8 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 	uint8_t *tmp;
 	int return_type, i;
 	float avgPhredQual = 0;
-	char str[512];
+	char str[512], str2[512];
+	uint8_t *a_qual, * a_qual2;
 
 	bam1_core_t bam_alignment_core = bam_alignment->core;
 
@@ -241,7 +242,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		newEl->split_start = (bam_alignment_core.l_qseq / 2);
 		newEl->read_length = bam_alignment_core.l_qseq;
 
-		uint8_t *a_qual = bam_get_qual( bam_alignment);
+		a_qual = bam_get_qual( bam_alignment);
 
 		for( i = newEl->split_start; i < bam_alignment_core.l_qseq; i++)
 			avgPhredQual = avgPhredQual + a_qual[i];
@@ -287,6 +288,73 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 
 		newEl->next = in_bam->listSplitRead;
 		in_bam->listSplitRead = newEl;
+
+		split_read_count++;
+
+		//Split the other part also
+
+		char read_name_2[1000];
+
+		splitRead *newEl2 = ( splitRead *) getMem( sizeof( splitRead));
+
+		sprintf( read_name_2, "%s_read2", bam_alignment->data);
+		newEl2->readName = NULL;
+		set_str( &(newEl2->readName), read_name_2);
+
+		/* Get the name of the chromosome */
+		newEl2->chromosome_name = NULL;
+		set_str( &(newEl2->chromosome_name), params->this_sonic->chromosome_names[chr_index]);
+
+		newEl2->pos = bam_alignment_core.pos + (bam_alignment_core.l_qseq / 2);
+		newEl2->qual = bam_alignment_core.qual;
+		newEl2->orient = FORWARD;
+		newEl2->split_start = 0;
+		newEl2->read_length = bam_alignment_core.l_qseq;
+
+		a_qual2 = bam_get_qual( bam_alignment);
+
+		for( i = 0; i < bam_alignment_core.l_qseq / 2; i++)
+			avgPhredQual = avgPhredQual + a_qual2[i];
+
+		avgPhredQual = ( float)avgPhredQual / ( float)(bam_alignment_core.l_qseq / 2);
+
+		newEl2->avgPhredQualSplitRead = ( int)floorf( avgPhredQual);
+
+		if(newEl2->avgPhredQualSplitRead < params->mq_threshold)
+		{
+			free(newEl2->chromosome_name);
+			free(newEl2->readName);
+			free(newEl2);
+			return -1;
+		}
+
+		newEl2->ptrSplitMap = NULL;
+
+		k = 0;
+		for( i = 0; i < newEl2->read_length / 2; i++)
+		{
+			if( bam_seqi( bam_get_seq( bam_alignment), i) == 1)
+				str2[k] = 'A';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 2)
+				str2[k] = 'C';
+			else if(bam_seqi( bam_get_seq( bam_alignment), i) == 4)
+				str2[k] = 'G';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 8)
+				str2[k] = 'T';
+			else if( bam_seqi( bam_get_seq( bam_alignment), i) == 15)
+				str2[k] = 'N';
+			k++;
+		}
+		str2[k] = '\0';
+
+		if(str2 != NULL)
+		{
+			newEl2->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str2, newEl2->pos);
+			//free(str);
+		}
+
+		newEl2->next = in_bam->listSplitRead;
+		in_bam->listSplitRead = newEl2;
 
 		split_read_count++;
 

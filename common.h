@@ -88,10 +88,13 @@ typedef struct _params
 
 typedef struct _bam_info
 {
-	int read_count; /* total number of reads in this library */
-	short* read_depth_per_chr; /* read depth */
+	int total_read_count; /* total number of reads in this library */
+	int total_read_count_lq; /* total number of reads in this library */
+	short* rd; /* read depth */
+	short* rd_lq; /* read depth low qual */
 	float mean;
-	float mean_rd_per_gc[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
+	float expected_rd[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
+	float expected_rd_lq[101];
 
 	htsFile* bam_file; /* file pointer to the BAM file */
 	hts_idx_t* bam_file_index;

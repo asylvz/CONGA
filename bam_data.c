@@ -30,13 +30,17 @@ SplitRow *createSplitRow(int locMapLeftStart, int locMapLeftEnd, char orientatio
 
 SplitRow *determine_SvType( splitRead *ptrSplitRead, posMapSplitRead *ptrPosMapSplit)
 {
-	int pos1_1, pos1_2, pos2_1, pos2_2;
+	int pos1_1, pos1_2, pos2_1, pos2_2, i = 0;
 
 	/* Length of read A(left) and read B(right) */
 	int lengthRead, lengthSplit;
+	bool is_split_beginning = false;
+
+	if(strstr(ptrSplitRead->readName, "_read2") != NULL)
+		is_split_beginning = true;
 
 	/* If soft clip is at the end */
-	lengthSplit = ptrSplitRead->read_length - ptrSplitRead->split_start;
+	lengthSplit = ptrSplitRead->read_length / 2;
 	lengthRead = ptrSplitRead->read_length - lengthSplit;
 
 	if( ptrSplitRead->pos < ptrPosMapSplit->posMap)
@@ -59,12 +63,14 @@ SplitRow *determine_SvType( splitRead *ptrSplitRead, posMapSplitRead *ptrPosMapS
 
 	if( ptrSplitRead->orient == FORWARD && ptrPosMapSplit->orient == FORWARD)
 	{
-		if( ( ptrSplitRead->pos < ptrPosMapSplit->posMap))
+		if( (( ptrSplitRead->pos < ptrPosMapSplit->posMap) && is_split_beginning == false) ||
+				(( ptrSplitRead->pos > ptrPosMapSplit->posMap) && is_split_beginning == true))
 		{
 			SplitRow * newRow = createSplitRow (pos1_1, pos1_2, FORWARD, pos2_1, pos2_2, FORWARD, DELETION);
 			return newRow;
 		}
-		else if( ( ptrPosMapSplit->posMap < ptrSplitRead->pos))
+		else if( (( ptrPosMapSplit->posMap < ptrSplitRead->pos) && is_split_beginning == false) ||
+				(( ptrPosMapSplit->posMap > ptrSplitRead->pos) && is_split_beginning == true))
 		{
 			SplitRow * newRow = createSplitRow (pos1_1, pos1_2, FORWARD, pos2_1, pos2_2, FORWARD, DUPLICATION);
 			return newRow;
@@ -193,6 +199,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 	char seq_file[MAX_SEQ];
 	int return_type;
 	int cnt_reads = 0;
+	int cnt_read_filtered = 0;
 
 	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
 	fpSeq = safe_fopen( seq_file,"w");
@@ -208,18 +215,28 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 			if( !params->no_sr && bam_alignment_core.l_qseq > params->min_read_length)
 				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
 
+
+			/*Write to a text file*/
+			if(!params->no_kmer)
+				(*base_count_bam) = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
+
 		}
-		/*Write to a text file*/
-		if(!params->no_kmer)
-			(*base_count_bam) = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
+		if(bam_alignment_core.qual > params->mq_threshold)
+		{
+			cnt_reads++;
 
-		cnt_reads++;
-
-		/* Increase the read depth and read count for RD filtering */
-		in_bam->read_depth_per_chr[bam_alignment_core.pos]++;
-		in_bam->read_count++;
+			// Increase the read depth and read count for RD filtering
+			in_bam->rd[bam_alignment_core.pos]++;
+			in_bam->total_read_count++;
+		}
+		else
+		{
+			in_bam->rd_lq[bam_alignment_core.pos]++;
+			in_bam->total_read_count_lq++;
+			cnt_read_filtered++;
+		}
 	}
-	fprintf(stderr," (There are %d reads)\n", cnt_reads);
+	fprintf(stderr," (There are %d reads and %ld split-reads)\n", cnt_reads, split_read_count);
 	fclose(fpSeq);
 	bam_destroy1( bam_alignment);
 }
@@ -235,17 +252,17 @@ void read_bam( bam_info* in_bam, parameters *params)
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
-	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
 
 	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output Del file: %s\n", svfile_del);
 	fpDel = safe_fopen( svfile_del,"w");
-	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tREAD_PAIR_BORDER\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tREAD_PAIR_BORDER\tKMER_COUNT\tKMER_PER_BASE\n");
 
 	sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 	fpDup = safe_fopen( svfile_dup,"w");
-	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
 
 
 	/* HTS implementation */

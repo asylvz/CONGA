@@ -11,6 +11,7 @@
 #include "common.h"
 
 #define MAX_SR_HIT 50000
+#define MAX_MAPPING 100
 
 #define HASHKMERLEN 10
 
