@@ -29,6 +29,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			{"input"  , required_argument,   0, 'i'},
 			{"rp", required_argument, 0, 'j'},
 			{"min-sv-size"    , required_argument,	 0, 'l'},
+			{"mappability"    , required_argument,	 0, 'm'},
 			{"sonic-info"    , required_argument,	 0, 'n'},
 			{"out"    , required_argument,	 0, 'o'},
 			{"sonic"    , required_argument,	 0, 's'},
@@ -91,6 +92,10 @@ int parse_command_line( int argc, char** argv, parameters* params)
 
 		case 'l':
 			params->min_sv_size = atoi( optarg);
+			break;
+
+		case 'm':
+			set_str( &( params->mappability_file), optarg);
 			break;
 
 		case 'n':

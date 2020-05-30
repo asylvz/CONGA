@@ -11,16 +11,22 @@
 
 void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 {
-	in_bam->total_read_count = 0;
-	in_bam->rd = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	// For reads that only pass a quality measure
+	in_bam->total_read_count_filtered = 0;
+	in_bam->rd_filtered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->rd_filtered, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 
-	memset (in_bam->rd, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+	// For all the reads in the chromosome
+	in_bam->total_read_count_unfiltered = 0;
+	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->rd_unfiltered, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+}
 
-	// For low qual reads
-	in_bam->total_read_count_lq = 0;
-	in_bam->rd_lq = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
+{
 
-	memset (in_bam->rd_lq, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->mappability, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(float)));
 }
 
 
@@ -32,7 +38,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 
 	for( i = 0; i < chromosome_length; i++)
 	{
-		rd_cnt += (long) in_bam->rd[i];
+		rd_cnt += (long) in_bam->rd_filtered[i];
 		window_total++;
 	}
 	/* Calculate mu values */
@@ -49,7 +55,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 {
 	int lib_index, i, gc_val = -1, window_per_gc[101], end;
-	long rd_per_gc[101], rd_per_gc_lq[101];
+	long rd_per_gc_filtered[101], rd_per_gc_unfiltered[101];
 
 
 	calc_mu_per_chr( in_bam, params->this_sonic->chromosome_lengths[chr_index]);
@@ -57,8 +63,8 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 	/* Calculate mu_GC values */
 	for( i = 0; i < 101; i++)
 	{
-		rd_per_gc[i] = 0;
-		rd_per_gc_lq[i] = 0;
+		rd_per_gc_filtered[i] = 0;
+		rd_per_gc_unfiltered[i] = 0;
 		window_per_gc[i] = 0;
 	}
 
@@ -70,29 +76,29 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
 		gc_val = (int) round ( sonic_get_gc_content( params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
-		rd_per_gc[gc_val] += ( long) in_bam->rd[i];
-		rd_per_gc_lq[gc_val] += ( long) in_bam->rd[i] + ( long) in_bam->rd_lq[i];
+		rd_per_gc_filtered[gc_val] += ( long) in_bam->rd_filtered[i];
+		rd_per_gc_unfiltered[gc_val] += ( long) in_bam->rd_unfiltered[i];
 		window_per_gc[gc_val]++;
 	}
 
-	in_bam->expected_rd[0] = 0.0;
+	in_bam->expected_rd_filtered[0] = 0.0;
 	for( i = 1; i < 101; i++)
 	{
-		in_bam->expected_rd[i] = ( float)rd_per_gc[i] / ( window_per_gc[i]);
+		in_bam->expected_rd_filtered[i] = ( float)rd_per_gc_filtered[i] / ( window_per_gc[i]);
 
-		if( isnanf( in_bam->expected_rd[i]) || isinff( ( in_bam->expected_rd[i])) == -1
-				|| isinff( ( in_bam->expected_rd[i])) == 1 )
-			in_bam->expected_rd[i] = 0;
-		fprintf(stderr,"GC = %d - RD=%ld\tWINDOW=%d\tMEAN=%f\n", i, rd_per_gc[i], window_per_gc[i], in_bam->expected_rd[i]);
+		if( isnanf( in_bam->expected_rd_filtered[i]) || isinff( ( in_bam->expected_rd_filtered[i])) == -1
+				|| isinff( ( in_bam->expected_rd_filtered[i])) == 1 )
+			in_bam->expected_rd_filtered[i] = 0;
+		//fprintf(stderr,"GC = %d - RD=%ld\tWINDOW=%d\tMEAN=%f\n", i, rd_per_gc_filtered[i], window_per_gc[i], in_bam->expected_rd_filtered[i]);
 	}
 
-	in_bam->expected_rd_lq[0] = 0.0;
+	in_bam->expected_rd_unfiltered[0] = 0.0;
 	for( i = 1; i < 101; i++)
 	{
-		in_bam->expected_rd_lq[i] = ( float)rd_per_gc_lq[i] / ( window_per_gc[i]);
+		in_bam->expected_rd_unfiltered[i] = ( float)rd_per_gc_unfiltered[i] / ( window_per_gc[i]);
 
-		if( isnanf( in_bam->expected_rd_lq[i]) || isinff( ( in_bam->expected_rd_lq[i])) == -1
-				|| isinff( ( in_bam->expected_rd_lq[i])) == 1 )
-			in_bam->expected_rd_lq[i] = 0;
+		if( isnanf( in_bam->expected_rd_unfiltered[i]) || isinff( ( in_bam->expected_rd_unfiltered[i])) == -1
+				|| isinff( ( in_bam->expected_rd_unfiltered[i])) == 1 )
+			in_bam->expected_rd_unfiltered[i] = 0;
 	}
 }

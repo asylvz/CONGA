@@ -199,7 +199,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 	char seq_file[MAX_SEQ];
 	int return_type;
 	int cnt_reads = 0;
-	int cnt_read_filtered = 0;
+	//int cnt_read_filtered = 0;
 
 	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
 	fpSeq = safe_fopen( seq_file,"w");
@@ -226,15 +226,14 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 			cnt_reads++;
 
 			// Increase the read depth and read count for RD filtering
-			in_bam->rd[bam_alignment_core.pos]++;
-			in_bam->total_read_count++;
+			in_bam->rd_filtered[bam_alignment_core.pos]++;
+			in_bam->total_read_count_filtered++;
 		}
-		else
-		{
-			in_bam->rd_lq[bam_alignment_core.pos]++;
-			in_bam->total_read_count_lq++;
-			cnt_read_filtered++;
-		}
+
+		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
+		in_bam->total_read_count_unfiltered++;
+		//cnt_read_filtered++;
+
 	}
 	fprintf(stderr," (There are %d reads and %ld split-reads)\n", cnt_reads, split_read_count);
 	fclose(fpSeq);

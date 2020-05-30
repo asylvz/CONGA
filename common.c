@@ -21,6 +21,7 @@ void init_params( parameters** params)
 	( *params)->dup_file = NULL;
 	( *params)->del_file = NULL;
 	( *params)->low_map_regions = NULL;
+	( *params)->mappability_file= NULL;
 	( *params)->sonic_file = NULL;
 	( *params)->this_sonic = NULL;
 	( *params)->outprefix = NULL;

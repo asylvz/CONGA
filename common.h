@@ -79,6 +79,7 @@ typedef struct _params
 	int hash_size; /* size of the hash table for split read mapping */
 	long int hash_size_kmer; /* size of the hash table for split read mapping */
 	char *sonic_file; /* SONIC file name */
+	char *mappability_file; /* a file that contains mappability information for various intervals */
 	int load_sonic; /*load SONIC file*/
 	int no_sr; /* Don't use split-read */
 	int no_kmer; /* Don't use k-mers */
@@ -88,13 +89,14 @@ typedef struct _params
 
 typedef struct _bam_info
 {
-	int total_read_count; /* total number of reads in this library */
-	int total_read_count_lq; /* total number of reads in this library */
-	short* rd; /* read depth */
-	short* rd_lq; /* read depth low qual */
+	int total_read_count_filtered; /* total number of reads  */
+	int total_read_count_unfiltered; /* total number of reads that are > some mapping quality */
+	short* rd_filtered; /* read depth */
+	short* rd_unfiltered; /* read depth low qual */
+	float* mappability; /* mappability value for each base */
 	float mean;
-	float expected_rd[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
-	float expected_rd_lq[101];
+	float expected_rd_filtered[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
+	float expected_rd_unfiltered[101];
 
 	htsFile* bam_file; /* file pointer to the BAM file */
 	hts_idx_t* bam_file_index;

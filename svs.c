@@ -269,7 +269,7 @@ void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, cha
 		}
 		for(i = 0; i < del_count; i++)
 		{
-			if((start_sv >= vars_del[i].start && start_sv <= vars_del[i].end) || (start_sv >= vars_del[i].start && start_sv <= vars_del[i].end))
+			if((start_sv >= vars_del[i].start && start_sv <= vars_del[i].end) || (end_sv >= vars_del[i].start && end_sv <= vars_del[i].end))
 			{
 				vars_del[i].low_mappability = true;
 				cnt_del++;
@@ -277,7 +277,7 @@ void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, cha
 		}
 		for(i = 0; i < dup_count; i++)
 		{
-			if((start_sv >= vars_dup[i].start && start_sv <= vars_dup[i].end) || (start_sv >= vars_dup[i].start && start_sv <= vars_dup[i].end))
+			if((start_sv >= vars_dup[i].start && start_sv <= vars_dup[i].end) || (end_sv >= vars_dup[i].start && end_sv <= vars_dup[i].end))
 			{
 				vars_dup[i].low_mappability = true;
 				cnt_dup++;
@@ -285,5 +285,69 @@ void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, cha
 		}
 		line[0] = '\0';
 	}
+	fclose(low_map_file);
 	fprintf(stderr,"Filtered Low Mappability Regions (%d dels and %d dups)\n", cnt_del, cnt_dup);
 }
+
+void load_mappability_regions(bam_info* in_bam, parameters *params, char* chr)
+{
+	int i;
+	char* return_value;
+	char line[512];
+	char *sv_start, *sv_end, *chr_name, *mappability_tmp;
+	int start_sv, end_sv;
+	float mappability;
+	FILE *mappability_file;
+	mappability_file = safe_fopen(params->mappability_file, "r");
+
+	//Count the lines first
+	while(!feof(mappability_file))
+	{
+		return_value = fgets(line, 512, mappability_file);
+
+		if (line == NULL)
+			continue;
+
+		// If the read line is empty
+		int isEmpty = 1;
+		int len = strlen (line);
+		for (i = 0; i < len; i++)
+		{
+			if (!isspace (line[i]))
+			{
+				isEmpty = 0;
+				break;
+			}
+		}
+		if (isEmpty)
+			continue;
+
+		chr_name = strtok (line, ROW_DELIMITERS);
+
+		if(strcmp(chr_name, chr) != 0)
+		{
+			line[0] = '\0';
+			continue;
+		}
+
+		sv_start = strtok (NULL, ROW_DELIMITERS);
+		start_sv = atoi(sv_start);
+
+		sv_end = strtok (NULL, ROW_DELIMITERS);
+		end_sv = atoi(sv_end);
+
+		mappability_tmp = strtok (NULL, ROW_DELIMITERS);
+		mappability = atof(mappability_tmp);
+
+		int i;
+		for(i = start_sv; i <= end_sv; i++)
+		{
+			in_bam->mappability[i] = mappability;
+		}
+
+		line[0] = '\0';
+	}
+	fclose(mappability_file);
+	fprintf(stderr,"Added mappability information for each position\n");
+}
+
