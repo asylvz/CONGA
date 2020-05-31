@@ -7,6 +7,7 @@
 #include <htslib/hts.h>
 #include "common.h"
 #include "svs.h"
+#include <htslib/faidx.h>
 
 // Track memory usage
 long long memUsage = 0;
@@ -35,7 +36,6 @@ void init_params( parameters** params)
 	( *params)->load_sonic = 0;
 	( *params)->sonic_info = NULL;
 	( *params)->ref_seq = NULL;
-	//( *params)->kmer_seq = NULL;
 	( *params)->hash_size = 0;
 	( *params)->min_read_length = 0;
 }
@@ -417,4 +417,48 @@ char* reverseComplement( char* str)
 		str2[i] = tmp;
 	}
 	return str2;
+}
+
+/* Read the reference genome */
+long readReferenceSeq( parameters *params, int chr_index)
+{
+	int i, min, max, loc_length;
+	char *ref_seq;
+	long bp_cnt = 0;
+	faidx_t* ref_fai;
+
+	if (params->ref_seq != NULL)
+	{
+		fprintf (stderr, "Reference genome is already loaded.\n");
+		return -1;
+	}
+
+	min = 0, max = 999;
+	ref_fai = fai_load( params->ref_genome);
+
+	params->ref_seq = ( char *) getMem( (params->this_sonic->chromosome_lengths[chr_index] + 1) * sizeof( char));
+
+	while ( max < params->this_sonic->chromosome_lengths[chr_index])
+	{
+		ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
+
+		for( i = 0; i < loc_length; i++)
+		{
+			/* can we do this faster with memcpy? */
+			if( bp_cnt < params->this_sonic->chromosome_lengths[chr_index])
+				params->ref_seq[bp_cnt] = toupper( ref_seq[i]);
+			bp_cnt++;
+		}
+		if( bp_cnt >= params->this_sonic->chromosome_lengths[chr_index])
+			break;
+
+		min += loc_length;
+		max += loc_length;
+		free(ref_seq);
+	}
+	fai_destroy(ref_fai);
+
+	params->ref_seq[bp_cnt] = '\0';
+
+	return bp_cnt;
 }

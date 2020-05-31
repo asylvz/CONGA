@@ -12,7 +12,9 @@
 #define DELETION 'D'
 #define DUPLICATION 'E'
 
-#define KMER 31
+#define KMER 33
+#define KMERSLIDE 5
+#define MINKMERHASHSIZE 100
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -89,14 +91,16 @@ typedef struct _params
 
 typedef struct _bam_info
 {
-	int total_read_count_filtered; /* total number of reads  */
+	//int total_read_count_filtered; /* total number of reads  */
 	int total_read_count_unfiltered; /* total number of reads that are > some mapping quality */
-	short* rd_filtered; /* read depth */
+	//short* rd_filtered; /* read depth */
 	short* rd_unfiltered; /* read depth low qual */
 	float* mappability; /* mappability value for each base */
 	float mean;
-	float expected_rd_filtered[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
+	//float expected_rd_filtered[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
 	float expected_rd_unfiltered[101];
+	float expected_kmer[101];
+	short* kmer;
 
 	htsFile* bam_file; /* file pointer to the BAM file */
 	hts_idx_t* bam_file_index;
@@ -153,6 +157,7 @@ int is_proper( int flag);
 void get_sample_name(bam_info* in_bam, char* header_text);
 char *substring(char *string, int position, int length);
 char* reverseComplement( char* str);
+long readReferenceSeq( parameters *params, int chr_index);
 
 // Memory allocation/tracking functions
 void* getMem( size_t size);

@@ -76,7 +76,7 @@ int legitimateSeed(char* seed)
 }
 
 /* Read the reference genome */
-void read_kmer_jellyfish( parameters *params)
+int read_kmer_jellyfish( parameters *params)
 {
 	int i, j, mer_count = 0;
 	char *kmer_seq, *return_value, *tmp;
@@ -88,6 +88,7 @@ void read_kmer_jellyfish( parameters *params)
 	int hash_size, kmer_freq;
 	HashInfo *newEl = NULL;
 
+	//tmp_file = fopen("dnm_seqs", "w");
 	sprintf( seqFile, "mer_counts.fa");
 	fp_reads = fopen(seqFile, "r");
 	if (fp_reads == NULL){
@@ -121,7 +122,7 @@ void read_kmer_jellyfish( parameters *params)
 	rewind(fp_reads);
 	//fprintf(stderr,"There are %d lines", mer_count);
 
-
+	//fprintf(stderr,"HEREE %d\n", mer_count);
 	hash_size = firstPrime(mer_count * 1.2);
 	params->hash_size_kmer = hash_size;
 
@@ -131,24 +132,28 @@ void read_kmer_jellyfish( parameters *params)
 		hash_table_kmer[i] = NULL;
 
 	i = 0;
+
+	// Loops through the frequency file
 	while(!feof(fp_reads))
 	{
+		// This is executed once we get the frequency after this if
+		// First we get the frequency, then the sequence
 		if(i != 0 && (i % 2) == 0)
 		{
-			MurmurHash3_x86_128(kmer_seq, strlen(kmer_seq),42, hash);
+			MurmurHash3_x86_128(kmer_seq, strlen(kmer_seq), 42, hash);
 			hash_val1 = (unsigned) hash[0] % hash_size;
 
-			MurmurHash3_x86_128(kmer_seq, strlen(kmer_seq),11, hash);
+			MurmurHash3_x86_128(kmer_seq, strlen(kmer_seq), 11, hash);
 			hash_val2 = (unsigned) hash[0] % hash_size;
 
 			//if(hash_val1 == hash_val2)
-				//fprintf(stderr,"PROBLEMM IN HASH - Same values (kmer.c)\n");
+			//fprintf(stderr,"PROBLEMM IN HASH - Same values (kmer.c)\n");
 
 			newEl = (HashInfo *) getMem(sizeof(HashInfo));
 			newEl->freq = kmer_freq;
 			newEl->hash2 = hash_val2;
 
-			//fprintf(stderr,"%s\t%ld\t%u\t%u\t%d\n", kmer_seq, strlen(kmer_seq), hash_val1, hash_val2, newEl->freq);
+			//fprintf(tmp_file,"%s\t%ld\t%u\t%u\t%d\n", kmer_seq, strlen(kmer_seq), hash_val1, hash_val2, newEl->freq);
 			newEl->next = hash_table_kmer[hash_val1];
 			hash_table_kmer[hash_val1] = newEl;
 
@@ -189,6 +194,7 @@ void read_kmer_jellyfish( parameters *params)
 		i++;
 	}
 	fclose(fp_reads);
+	//fclose(tmp_file);
 
 	/*
 	for(i = 0; i < hash_size; i++)
@@ -200,100 +206,8 @@ void read_kmer_jellyfish( parameters *params)
 			tmp = tmp->next;
 		}
 	}*/
+	return hash_size;
 }
-
-
-
-/* Read the reference genome
-void read_kmer_seqs( parameters *params, int base_count, int mode)
-{
-	int i, j;
-	unsigned int hash_val;
-	FILE* fp_reads = NULL;
-	char seqFile[MAX_SEQ];
-	int mask, len_limit;
-	char seed[KMER + 1];
-	int hash[4];
-	int *hash_table_kmer_iter;
-
-	if (mode == HASH_COUNT)
-	{
-		hash_table_kmer_count = (int *) getMem( params->hash_size_kmer * sizeof (int));
-
-		sprintf( seqFile, "%s%s_seqs.fa", params->outdir, params->outprefix);
-		params->kmer_seq = (char *) getMem( (base_count + 1) * sizeof( char));
-
-		memset (hash_table_kmer_count, 0, params->hash_size_kmer * sizeof (int));
-
-		fp_reads = fopen(seqFile, "r");
-		if (fp_reads == NULL){
-			printf("Could not open file %s",seqFile);
-			exit(1);
-		}
-		len_limit = fread(params->kmer_seq, sizeof(char), base_count, fp_reads);
-		fclose(fp_reads);
-		params->kmer_seq[base_count] = '\0';
-	}
-
-	else
-	{
-		hash_table_kmer_iter = (int *) getMem( params->hash_size_kmer * sizeof (int));
-		hash_table_kmer_array = (HashInfo **) getMem (params->hash_size_kmer * sizeof (HashInfo *));
-
-		for (i = 0; i < params->hash_size_kmer; i++)
-		{
-			//if( hash_table_kmer_count[i] > 100)
-			//fprintf(stderr,"%d\n", hash_table_kmer_count[i]);
-			if (hash_table_kmer_count[i] != 0 && hash_table_kmer_count[i] < MAX_KHASH_HIT)
-			{
-				//fprintf(stderr,"%d\n", hash_table_kmer_count[i]);
-				hash_table_kmer_array[i] = (HashInfo *) getMem (hash_table_kmer_count[i] * sizeof (HashInfo));
-
-				for(j = 0; j < hash_table_kmer_count[i]; j++)
-					hash_table_kmer_array[i][j].freq = 0;
-			}
-			else
-			{
-				hash_table_kmer_count[i] = 0;
-				hash_table_kmer_array[i] = NULL;
-
-			}
-		}
-		memset (hash_table_kmer_iter, 0, params->hash_size_kmer * sizeof (int));
-	}
-	//fprintf(stderr,"Here\n");
-	i = 0;
-	while (i < base_count)
-	{
-		strncpy (seed, params->kmer_seq + i, KMER);
-		seed[KMER] = '\0';
-
-		MurmurHash3_x86_128(seed, strlen(seed),42, hash);
-		hash_val = (unsigned) hash[0] % params->hash_size_kmer;
-		//fprintf(stderr,"%s - %u - lim:%ld\n", seed, hash_val, params->hash_size_kmer);
-
-		if(hash_val < 0)
-		{
-			printf("ERRRRROOR HASH VALUE\n");
-			exit(1);
-		}
-		if (mode == HASH_COUNT)
-		{
-			(hash_table_kmer_count[hash_val])++;
-		}
-		else if (hash_table_kmer_count[hash_val] != 0)
-		{
-
-			hash_table_kmer_array[hash_val][hash_table_kmer_iter[hash_val]].pos = i;
-			hash_table_kmer_array[hash_val][hash_table_kmer_iter[hash_val]].freq++;
-			(hash_table_kmer_iter[hash_val])++;
-		}
-
-		i+=10; //shift
-	}
-	if (mode != HASH_COUNT)
-		free(hash_table_kmer_iter);
-}*/
 
 
 char* read_ref_seq( parameters *params, char* chr_name, int start, int end)
@@ -410,23 +324,32 @@ int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int
 }
 
 
-int calculate_kmers(parameters *params, char* chr_name, int start, int end)
+int kmer_count_interval(parameters *params, int start, int end)
 {
 	int variation_length, i, j;
-	char* seq = NULL, *seq_tmp = NULL, *seq_tmp_rev = NULL;
+	char *seq_tmp = NULL, *seq_tmp_rev = NULL;
 	int hash[4];
+	char seq[KMERWINDOWSIZE + 10];
+	//char* seq = NULL;
 	unsigned int hash_val1, hash_val2;
 	HashInfo *tmp;
 	int k_mer_count = 0;
 
 
 	variation_length = end - start + 1;
-	seq = read_ref_seq(params, chr_name, start, end);
 
+	j = 0;
+	for(i = start; i < end; i++)
+	{
+		seq[j] = params->ref_seq[i];
+		j++;
+	}
+	seq[j] = '\0';
+	//fprintf(stderr,"%s\n", seq);
 
 	//fprintf(stderr,"%d of %d (size = %d)\n", count, total_variant, variation_length);
 
-	for(i = 0; i < variation_length - KMER; i+=10)
+	for(i = 0; i < variation_length - KMER; i += KMERSLIDE)
 	{
 		for(j = 0; j < 2; j++)
 		{
@@ -440,10 +363,13 @@ int calculate_kmers(parameters *params, char* chr_name, int start, int end)
 					continue;
 
 				MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 42, hash);
+				//fprintf(stderr,"%u - \n", hash[0]);
+				//fprintf(stderr,"%li - \n", params->hash_size_kmer);
 				hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
 
 				MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 11, hash);
 				hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
+				//fprintf(stderr,"%u - %u\n", hash_val1, hash_val2);
 			}
 			else
 			{
@@ -469,9 +395,9 @@ int calculate_kmers(parameters *params, char* chr_name, int start, int end)
 			}
 
 			tmp = hash_table_kmer[hash_val1];
+
 			while(tmp != NULL)
 			{
-				//fprintf(stderr,"%d\t%u\n", tmp->freq,tmp->hash2);
 				if(tmp->hash2 == hash_val2)
 				{
 					k_mer_count += tmp->freq;
@@ -481,15 +407,40 @@ int calculate_kmers(parameters *params, char* chr_name, int start, int end)
 			}
 		}
 	}
-	if(seq != NULL)
+	/*if(seq != NULL)
 	{
 		free(seq);
 		seq = NULL;
-	}
+	}*/
 	return k_mer_count;
 }
 
-void calc_mean_kmer( parameters *params, char* chr_name, int chr_index, float *mean_kmer_per_gc)
+void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index)
+{
+	in_bam->kmer = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->kmer, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+}
+
+void calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
+{
+	int i, j, end;
+	short tmp;
+
+	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
+	{
+		if((i + KMERWINDOWSIZE) < params->this_sonic->chromosome_lengths[chr_index])
+			end = i + KMERWINDOWSIZE;
+		else
+			end = params->this_sonic->chromosome_lengths[chr_index];
+
+		tmp = (short) kmer_count_interval(params, i, end);
+
+		for(j = 0; j < KMERWINDOWSLIDE; j++)
+			in_bam->kmer[i + j] = tmp;
+	}
+}
+
+void calc_expected_kmer(bam_info *in_bam, parameters *params, int chr_index)
 {
 	int i, gc_val = -1, window_per_gc[101], end;
 	long rd_per_gc[101];
@@ -499,28 +450,29 @@ void calc_mean_kmer( parameters *params, char* chr_name, int chr_index, float *m
 	{
 		rd_per_gc[i] = 0;
 		window_per_gc[i] = 0;
+		in_bam->expected_kmer[i] = 0.0;
 	}
 
-	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += 100)
+	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
 	{
-		if((i + KMERWINDOWSLIDE) < params->this_sonic->chromosome_lengths[chr_index])
-			end = i + KMERWINDOWSLIDE;
+		if((i + KMERWINDOWSIZE) < params->this_sonic->chromosome_lengths[chr_index])
+			end = i + KMERWINDOWSIZE;
 		else
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
 		gc_val = (int) round (sonic_get_gc_content(params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
-		rd_per_gc[gc_val] += (long) calculate_kmers(params, chr_name, i, end);
+		//in_bam->kmer[i] = (short) kmer_count_interval(params, chr_name, i, end);
+		rd_per_gc[gc_val] += (long) in_bam->kmer[i];
 		window_per_gc[gc_val]++;
 	}
 
-	mean_kmer_per_gc[0] = 0.0;
 	for( i = 1; i < 101; i++)
 	{
-		mean_kmer_per_gc[i] = ( float)rd_per_gc[i] / ( window_per_gc[i]);
-		if( isnanf( mean_kmer_per_gc[i]) || isinff( ( mean_kmer_per_gc[i])) == -1
-				|| isinff( ( mean_kmer_per_gc[i])) == 1 )
-			mean_kmer_per_gc[i] = 0;
-		fprintf(stderr,"GC = %d - RD=%ld\tWINDOW=%d\tMEAN=%f\n", i, rd_per_gc[i],window_per_gc[i], mean_kmer_per_gc[i]);
+		in_bam->expected_kmer[i] = ( float)rd_per_gc[i] / ( window_per_gc[i]);
+		if( isnanf( in_bam->expected_kmer[i]) || isinff( ( in_bam->expected_kmer[i])) == -1
+				|| isinff( ( in_bam->expected_kmer[i])) == 1 )
+			in_bam->expected_kmer[i] = 0;
+		//fprintf(stderr,"GC = %d - RD=%ld\tWINDOW=%d\tMEAN=%f\n", i, rd_per_gc[i],window_per_gc[i], in_bam->expected_kmer[i]);
 	}
 }
 

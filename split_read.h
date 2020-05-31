@@ -49,10 +49,11 @@ typedef struct splitRead
 	posMapSplitRead *ptrSplitMap; // a linked list of all the positions that the soft clipped part of the read maps in the reference genome (chromosome_name:windowStart-windowEnd)
 }splitRead;
 
-void readReferenceSeq( parameters *params, int chr_index);
 int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignment, int chr_index);
 void map_split_reads( bam_info* in_bam, parameters* params, int chr_index);
 void init_hash_count(parameters *params);
 void free_hash_table(parameters *params);
+void build_hash_table(const char *ref, int len, int hash_size, int mode);
+void create_hash_table( parameters *params, int len);
 
 #endif /* SPLIT_READ_H_ */

@@ -157,16 +157,15 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 
 int write_sequences(parameters *params, bam1_t* bam_alignment, FILE* fp, int base_count)
 {
-	char str[1024];
 	int i, k = 0;
 	int hash[4];
 
 	bam1_core_t bam_alignment_core = bam_alignment->core;
+	char str[bam_alignment_core.l_qseq + 1];
 
 	if( bam_alignment_core.pos == 0)
 		return -1;
 
-	char seed[KMER + 1];
 
 	for(i = 0; i < bam_alignment_core.l_qseq; i++)
 	{
@@ -199,7 +198,6 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 	char seq_file[MAX_SEQ];
 	int return_type;
 	int cnt_reads = 0;
-	//int cnt_read_filtered = 0;
 
 	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
 	fpSeq = safe_fopen( seq_file,"w");
@@ -221,18 +219,18 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 				(*base_count_bam) = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
 
 		}
-		if(bam_alignment_core.qual > params->mq_threshold)
+		/*if(bam_alignment_core.qual > params->mq_threshold)
 		{
-			cnt_reads++;
+
 
 			// Increase the read depth and read count for RD filtering
 			in_bam->rd_filtered[bam_alignment_core.pos]++;
 			in_bam->total_read_count_filtered++;
-		}
+		}*/
 
 		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
 		in_bam->total_read_count_unfiltered++;
-		//cnt_read_filtered++;
+		cnt_reads++;
 
 	}
 	fprintf(stderr," (There are %d reads and %ld split-reads)\n", cnt_reads, split_read_count);
@@ -247,6 +245,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ], cmd_jelly[MAX_SEQ];
 	FILE *fpDel = NULL, *fpDup = NULL, *fpSVs = NULL;
 	int base_count_bam = 0;
+	long bp_cnt;
 
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
@@ -321,14 +320,17 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if(!params->no_sr)
 		{
 			fprintf( stderr, "\nReading the Reference Genome");
-			readReferenceSeq(params, chr_index);
+			bp_cnt = readReferenceSeq(params, chr_index);
+			build_hash_table(params->ref_seq, bp_cnt, params->hash_size, HASH_COUNT);
+			create_hash_table(params, bp_cnt);
 		}
 
 		/* Read bam file for this chromosome */
 		fprintf(stderr,"\nCounting Reads in the BAM file");
 		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
 
-		free_hash_table(params);
+		if(!params->no_sr)
+			free_hash_table(params);
 
 		/* Mean value (mu) calculation */
 		calc_mean_per_chr( params, in_bam, chr_index);
@@ -342,7 +344,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 		/*Run JellyFish */
 		if(!params->no_kmer)
 		{
-			//-C needed?
 			fprintf(stderr, "\nRunning Jellyfish (creating %s%s_seqs.fa)\n", params->outdir, params->outprefix);
 			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish count -m %d -s 200M -C -t 4 %s%s_seqs.fa --out-counter-len 1", KMER, params->outdir, params->outprefix);
 			int return_value = system(cmd_jelly);
