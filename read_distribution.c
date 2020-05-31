@@ -24,7 +24,6 @@ void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 
 void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
 {
-
 	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index]));
 	memset (in_bam->mappability, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(float)));
 }

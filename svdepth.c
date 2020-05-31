@@ -31,19 +31,6 @@ int main( int argc, char** argv)
 	/* Keeping simple logs in conga.log file */
 	logFile = safe_fopen ("conga.log", "w");
 	fprintf( logFile, "#CreationDate=%d.%d.%d\n\n", timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday);
-/*
-	char x[100] = ">;7>?>2?>?>?@@?@A;0?(B@D@@C@??>9+@B()+B;D>2A9@<2'>@(9='(7'=D;,0<A,=%081-*5*";
-
-	int sum = 0;
-	for(i = 0; i < strlen(x); i++)
-	{
-		int b = x[i] - 33;
-		fprintf(stderr,"%c - %d - %lf\n", x[i], b, pow(10,(double) (-b)/10));
-		sum += x[i] - 33;
-	}
-
-	double a = pow(10,(double) (-((double) sum/i))/10);
-	fprintf(stderr,"%d\t%d\t%f\n",sum, sum/i, a);*/
 
 
 	/* Set program parameters */
@@ -51,6 +38,8 @@ int main( int argc, char** argv)
 
 	/* Parse command line arguments */	
 	return_value = parse_command_line( argc, argv, params);
+	if(return_value == EXIT_PARAM_ERROR)
+		return EXIT_FAILURE;
 
 	print_params( params);
 

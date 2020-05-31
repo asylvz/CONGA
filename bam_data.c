@@ -233,7 +233,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 		cnt_reads++;
 
 	}
-	fprintf(stderr," (There are %d reads and %ld split-reads)\n", cnt_reads, split_read_count);
+	fprintf(stderr," (%d reads, %ld split-reads)\n", cnt_reads, split_read_count);
 	fclose(fpSeq);
 	bam_destroy1( bam_alignment);
 }
@@ -250,17 +250,17 @@ void read_bam( bam_info* in_bam, parameters *params)
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
-	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output Del file: %s\n", svfile_del);
 	fpDel = safe_fopen( svfile_del,"w");
-	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tREAD_PAIR_BORDER\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 	sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 	fpDup = safe_fopen( svfile_dup,"w");
-	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tLIKELIHOOD\tCOPY_NUMBER\tLOWQUALLIKELIHOOD\tREAD_PAIR\tKMER_COUNT\tKMER_PER_BASE\n");
+	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 
 	/* HTS implementation */
@@ -326,7 +326,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		}
 
 		/* Read bam file for this chromosome */
-		fprintf(stderr,"\nCounting Reads in the BAM file");
+		fprintf(stderr,"\n-->counting reads");
 		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
 
 		if(!params->no_sr)

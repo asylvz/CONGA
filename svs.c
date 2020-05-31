@@ -348,6 +348,6 @@ void load_mappability_regions(bam_info* in_bam, parameters *params, char* chr)
 		line[0] = '\0';
 	}
 	fclose(mappability_file);
-	fprintf(stderr,"Added mappability information for each position\n");
+	//fprintf(stderr,"Added mappability information for each position\n");
 }
 
