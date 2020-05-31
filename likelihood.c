@@ -314,7 +314,7 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 
 	fprintf(stderr,"\nLoading known SVs ");
 	load_known_SVs( &all_svs_del, &all_svs_dup, params, chr_name, &del_count, &dup_count);
-	fprintf( stderr, "(%d DELS, %d DUPS in chromosome %s - larger than the threshold of %d)\n", del_count, dup_count, chr_name, params->min_sv_size);
+	fprintf( stderr, "(%d DELS, %d DUPS in chromosome %s - larger than the threshold %d)\n", del_count, dup_count, chr_name, params->min_sv_size);
 
 	//Sort the known SVs
 	qsort( all_svs_del, del_count, sizeof(svs), compare_start_pos);
