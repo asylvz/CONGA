@@ -85,6 +85,7 @@ void free_DS(bam_info* in_bam, parameters *params)
 	free( params->outdir);
 	free( params->sonic_file);
 	free( params->sonic_info);
+	free( params->mappability_file);
 	free( params);
 
 	if(hash_table_count != NULL)

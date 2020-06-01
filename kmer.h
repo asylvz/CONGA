@@ -41,6 +41,6 @@ void init_hash_count_kmer(parameters *params);
 int kmer_count_interval(parameters *params, int start, int end);
 void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index);
 void calc_expected_kmer(bam_info *in_bam, parameters *params, int chr_index);
-void calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index);
+long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index);
 
 #endif /* KMER_H_ */

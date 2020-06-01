@@ -159,6 +159,9 @@ htsFile* safe_hts_open( char* path, char* mode)
  there hasn't been already */
 void set_str( char** target, char* source)
 {
+	int len = -1;
+	len = strlen( source) + 1;
+
 	if( *target != NULL)
 	{
 		free( ( *target));
@@ -167,7 +170,7 @@ void set_str( char** target, char* source)
 	if (source != NULL)
 	{
 		( *target) = ( char*) getMem( sizeof( char) * ( strlen( source) + 1));
-		strncpy( ( *target), source, ( strlen( source) + 1));
+		strncpy( ( *target), source, len);
 	}
 	else
 	{

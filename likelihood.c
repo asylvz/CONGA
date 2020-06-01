@@ -324,7 +324,8 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	sv_count = 0;
 	del_count = 0;
 	dup_count = 0;
-	int kmer_hash_size;
+	int kmer_hash_size = 0;
+	long total_kmers = 0;
 
 	fprintf(stderr,"\nLoading known SVs ");
 	load_known_SVs( &all_svs_del, &all_svs_dup, params, chr_name, &del_count, &dup_count);
@@ -335,6 +336,12 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	qsort( all_svs_dup, dup_count, sizeof(svs), compare_start_pos);
 
 	sv_count = del_count + dup_count;
+
+	if(sv_count == 0)
+	{
+		free(in_bam->rd_unfiltered);
+		return;
+	}
 
 	if(params->low_map_regions != NULL)
 	{
@@ -354,20 +361,23 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		fprintf(stderr,"\nReading K-MERS\n");
 		kmer_hash_size = read_kmer_jellyfish(params);
 
-		//fprintf(stderr,"\nReading ref");
-		readReferenceSeq(params, chr_index);
+		//fprintf(stderr,"\nHash size %d\n", kmer_hash_size);
+		if(kmer_hash_size > MINKMERHASHSIZE)
+		{
+			readReferenceSeq(params, chr_index);
 
-		init_kmer_per_chr(in_bam, params, chr_index);
+			init_kmer_per_chr(in_bam, params, chr_index);
 
-		fprintf(stderr,"-->calculating k-mer counts\n");
-		calc_kmer_counts(in_bam, params, chr_index);
+			fprintf(stderr,"-->calculating k-mer counts");
+			total_kmers = calc_kmer_counts(in_bam, params, chr_index);
+			fprintf(stderr," (%li kmers)\n", total_kmers);
 
-		fprintf(stderr,"-->calculating expected counts\n");
-		calc_expected_kmer(in_bam, params, chr_index);
+			fprintf(stderr,"-->calculating expected counts\n");
+			calc_expected_kmer(in_bam, params, chr_index);
 
-		free(params->ref_seq);
-		params->ref_seq = NULL;
-
+			free(params->ref_seq);
+			params->ref_seq = NULL;
+		}
 	}
 
 	//Check mappability
@@ -382,18 +392,18 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	fprintf(stderr,"\nCalculating Likelihoods\n");
 	find_depths(in_bam, params, chr_name, chr_index);
 
-	free( in_bam->rd_unfiltered);
+	free(in_bam->rd_unfiltered);
 
 	if(params->mappability_file != NULL)
-		free( in_bam->mappability);
+		free(in_bam->mappability);
 
 	if(!params->no_kmer)
 	{
-		free( in_bam->kmer);
+		free(in_bam->kmer);
 		in_bam->kmer = NULL;
 		free_hash_table_kmer(params);
 	}
-
+	//fprintf(stderr,"Outputting\n");
 	output_SVs(params, fp_SVs, fp_del, fp_dup);
 
 	free_SVs(all_svs_del, del_count);

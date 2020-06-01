@@ -50,8 +50,7 @@ void free_hash_table_kmer(parameters *params)
 
 int is_kmer_valid_likelihood (char *str)
 {
-
-	int i, l;
+	int i, l = -1;
 	l = (int) strlen(str);
 
 	if (l != KMER)
@@ -122,7 +121,6 @@ int read_kmer_jellyfish( parameters *params)
 	rewind(fp_reads);
 	//fprintf(stderr,"There are %d lines", mer_count);
 
-	//fprintf(stderr,"HEREE %d\n", mer_count);
 	hash_size = firstPrime(mer_count * 1.2);
 	params->hash_size_kmer = hash_size;
 
@@ -225,7 +223,7 @@ char* read_ref_seq( parameters *params, char* chr_name, int start, int end)
 
 	return ref_seq;
 }
-
+/*
 int query_jellyfish(char* str, int count, char type)
 {
 	int k = 0, z, freq = 0, freq_sum = 0;
@@ -266,8 +264,10 @@ int query_jellyfish(char* str, int count, char type)
 		all_svs_dup[count].k_mer += freq_sum;
 
 	return 1;
-}
-int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int total_variant, char type)
+}*/
+
+
+/*int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int total_variant, char type)
 {
 	int variation_length, i, j = 0, freq;
 	char* seq = NULL, *seq_tmp = NULL;
@@ -321,7 +321,7 @@ int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int
 		seq = NULL;
 	}
 	return 1;
-}
+}*/
 
 
 int kmer_count_interval(parameters *params, int start, int end)
@@ -332,8 +332,9 @@ int kmer_count_interval(parameters *params, int start, int end)
 	char seq[KMERWINDOWSIZE + 10];
 	//char* seq = NULL;
 	unsigned int hash_val1, hash_val2;
-	HashInfo *tmp;
-	int k_mer_count = 0;
+	HashInfo *tmp = NULL;
+	int kmer_count_forward = 0, kmer_count_reverse = 0;
+	int is_kmer_valid = 0;
 
 
 	variation_length = end - start + 1;
@@ -345,74 +346,76 @@ int kmer_count_interval(parameters *params, int start, int end)
 		j++;
 	}
 	seq[j] = '\0';
-	//fprintf(stderr,"%s\n", seq);
 
-	//fprintf(stderr,"%d of %d (size = %d)\n", count, total_variant, variation_length);
 
 	for(i = 0; i < variation_length - KMER; i += KMERSLIDE)
 	{
-		for(j = 0; j < 2; j++)
+		// For forward strand
+		seq_tmp = substring(seq, i, KMER);
+		//if(seq_tmp == NULL)
+		//continue;
+
+		is_kmer_valid = is_kmer_valid_likelihood(seq_tmp);
+		if(!is_kmer_valid)
 		{
-			if(j == 0)
+			free(seq_tmp);
+			continue;
+		}
+
+		MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 42, hash);
+		hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
+
+		MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 11, hash);
+		hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
+		//fprintf(stderr,"%u - %u\n", hash_val1, hash_val2);
+
+		tmp = hash_table_kmer[hash_val1];
+		while(tmp != NULL)
+		{
+			if(tmp->hash2 == hash_val2)
 			{
-				seq_tmp = substring(seq, i, KMER);
-				if(seq_tmp == NULL)
-					continue;
-
-				if(!is_kmer_valid_likelihood(seq_tmp))
-					continue;
-
-				MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 42, hash);
-				//fprintf(stderr,"%u - \n", hash[0]);
-				//fprintf(stderr,"%li - \n", params->hash_size_kmer);
-				hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
-
-				MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 11, hash);
-				hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
-				//fprintf(stderr,"%u - %u\n", hash_val1, hash_val2);
+				kmer_count_forward += tmp->freq;
+				break;
 			}
-			else
+			tmp = tmp->next;
+		}
+
+		//For reverse strand
+		seq_tmp_rev = reverseComplement(seq_tmp);
+		//if(seq_tmp_rev == NULL)
+		//continue;
+
+		is_kmer_valid = is_kmer_valid_likelihood(seq_tmp_rev);
+		if(!is_kmer_valid)
+		{
+			free(seq_tmp_rev);
+			continue;
+		}
+
+		MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 42, hash);
+		hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
+
+		MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 11, hash);
+		hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
+
+		free(seq_tmp);
+		seq_tmp = NULL;
+
+		free(seq_tmp_rev);
+		seq_tmp_rev = NULL;
+
+		tmp = hash_table_kmer[hash_val1];
+		while(tmp != NULL)
+		{
+			if(tmp->hash2 == hash_val2)
 			{
-				seq_tmp_rev = reverseComplement(seq_tmp);
-
-				if(seq_tmp_rev == NULL)
-					continue;
-
-				if(!is_kmer_valid_likelihood(seq_tmp_rev))
-					continue;
-
-				MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 42, hash);
-				hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
-
-				MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 11, hash);
-				hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
-
-				free(seq_tmp);
-				seq_tmp = NULL;
-
-				free(seq_tmp_rev);
-				seq_tmp_rev = NULL;
+				kmer_count_reverse += tmp->freq;
+				break;
 			}
-
-			tmp = hash_table_kmer[hash_val1];
-
-			while(tmp != NULL)
-			{
-				if(tmp->hash2 == hash_val2)
-				{
-					k_mer_count += tmp->freq;
-					break;
-				}
-				tmp = tmp->next;
-			}
+			tmp = tmp->next;
 		}
 	}
-	/*if(seq != NULL)
-	{
-		free(seq);
-		seq = NULL;
-	}*/
-	return k_mer_count;
+	return (kmer_count_forward + kmer_count_reverse);
 }
 
 void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index)
@@ -421,10 +424,11 @@ void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 	memset (in_bam->kmer, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
-void calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
+long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 {
-	int i, j, end;
-	short tmp;
+	int i, j, end = -1;
+	short tmp = 0;
+	long total_kmers = 0;
 
 	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
 	{
@@ -433,11 +437,13 @@ void calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 		else
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
+		tmp = 0;
 		tmp = (short) kmer_count_interval(params, i, end);
-
+		total_kmers += (long) tmp;
 		for(j = 0; j < KMERWINDOWSLIDE; j++)
 			in_bam->kmer[i + j] = tmp;
 	}
+	return total_kmers;
 }
 
 void calc_expected_kmer(bam_info *in_bam, parameters *params, int chr_index)
