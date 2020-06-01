@@ -128,11 +128,13 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		expected_rd_unfiltered += in_bam->expected_rd_unfiltered[gc_val];
 		observed_rd_unfiltered += in_bam->rd_unfiltered[i];
 
-		mappability_score += in_bam->mappability[i];
+		if(params->mappability_file != NULL)
+			mappability_score += in_bam->mappability[i];
 	}
 	//fprintf(stderr,"%d - %f ----- %d - %f\n", observed_rd_filtered, expected_rd_filtered, observed_rd_unfiltered, expected_rd_unfiltered);
 
-	arr[count].mappability = mappability_score / (double) (arr[count].end - arr[count].start);
+	if(params->mappability_file != NULL)
+		arr[count].mappability = mappability_score / (double) (arr[count].end - arr[count].start);
 
 	if(!params->no_kmer)
 	{
@@ -248,11 +250,23 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 		fprintf(fp_del,"%s\t%d\t%d\t%.1f\t%.2f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp, all_svs_del[count].mappability);
 		//fprintf(fp_del,"%s\t%d\t%d\t%.2lf\t%.2f\t%.2lf\t%d\t%f\t%d\t%f\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood_filtered, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_filtered, all_svs_del[count].expected_rd_filtered, all_svs_del[count].observed_rd_all, all_svs_del[count].expected_rd_all);
 
-		if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].mappability > 0.5 && all_svs_del[count].likelihood_kmer < 10)
+		if(params->mappability_file != NULL)
 		{
-			fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp, all_svs_del[count].mappability);
-			//fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.2f\t%.2lf\t%d\t%f\t%d\t%f\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood_filtered, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_filtered, all_svs_del[count].expected_rd_filtered, all_svs_del[count].observed_rd_all, all_svs_del[count].expected_rd_all);
-			sv_cnt_del++;
+			if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].mappability > 0.5 && all_svs_del[count].likelihood_kmer < 10)
+			{
+				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp, all_svs_del[count].mappability);
+				//fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.2f\t%.2lf\t%d\t%f\t%d\t%f\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood_filtered, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_filtered, all_svs_del[count].expected_rd_filtered, all_svs_del[count].observed_rd_all, all_svs_del[count].expected_rd_all);
+				sv_cnt_del++;
+			}
+		}
+		else
+		{
+			if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].likelihood_kmer < 10)
+			{
+				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp);
+				//fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.2lf\t%.2f\t%.2lf\t%d\t%f\t%d\t%f\t%d\t%f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].likelihood_filtered, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_filtered, all_svs_del[count].expected_rd_filtered, all_svs_del[count].observed_rd_all, all_svs_del[count].expected_rd_all);
+				sv_cnt_del++;
+			}
 		}
 	}
 
@@ -358,16 +372,20 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 
 	//Check mappability
 	//fprintf(stderr,"Finding mappability for each region\n");
-	init_mappability_per_chr( in_bam, params, chr_index);
-	load_mappability_regions( in_bam, params, chr_name);
+	if(params->mappability_file != NULL)
+	{
+		init_mappability_per_chr( in_bam, params, chr_index);
+		load_mappability_regions( in_bam, params, chr_name);
+	}
 
 
 	fprintf(stderr,"\nCalculating Likelihoods\n");
 	find_depths(in_bam, params, chr_name, chr_index);
 
-	//free( in_bam->rd_filtered);
 	free( in_bam->rd_unfiltered);
-	free( in_bam->mappability);
+
+	if(params->mappability_file != NULL)
+		free( in_bam->mappability);
 
 	if(!params->no_kmer)
 	{
