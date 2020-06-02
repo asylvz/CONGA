@@ -5,9 +5,10 @@ CONGA
 Requirements
 ============
 
- * zlib   (http://www.zlib.net)
- * htslib (included as submodule; http://htslib.org/)
- * sonic  (included as submodule; https://github.com/calkan/sonic)
+ * jellyfish 	(https://github.com/gmarcais/Jellyfish) - the binary file should be copied into the CONGA directory
+ * zlib   	(http://www.zlib.net)
+ * htslib	(included as submodule; http://htslib.org/)
+ * sonic  	(included as submodule; https://github.com/calkan/sonic)
 
 Fetching CONGA
 ===============
@@ -56,12 +57,15 @@ The README.md file includes documentation on how to obtain the necessary files f
 All parameters
 ==============
 
-	--input [BAM file ]        : Input files in sorted and indexed BAM format.
-	--out   [output prefix]    : Prefix for the output file names.
-	--ref   [reference genome] : Reference genome in FASTA format.
-	--sonic [sonic file]       : SONIC file that contains assembly annotations.
-	--dels  [bed file]         : Known deletion SVs in bed format\n");
-	--dups  [bed file]         : Known duplication SVs in bed format\n");
+	--input 	[BAM file]         : Input files in sorted and indexed BAM format. (required)
+	--out   	[output prefix]    : Prefix for the output file names. (required)
+	--ref   	[reference genome] : Reference genome in FASTA format. (required)
+	--sonic 	[sonic file]       : SONIC file that contains assembly annotations. (required)
+	--dels          [bed file]         : Known deletion SVs in bed format\n");
+	--dups          [bed file]         : Known duplication SVs in bed format\n");
+	--mappability   [bed file]         : Mappability file in BED format
+	--first-chr     [chromosome index] : The index of the first chromosome for genotyping in your BAM.
+	--last-chr      [chromosome index] : The index of the last chromosome for genotyping in your BAM.
 
 	
 	Information:
