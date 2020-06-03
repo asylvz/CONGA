@@ -14,7 +14,7 @@
 
 #define KMER 33
 #define KMERSLIDE 5
-#define MINKMERHASHSIZE 100
+#define MINKMERHASHSIZE 10
 
 #define LEFT 'L'
 #define RIGHT 'R'

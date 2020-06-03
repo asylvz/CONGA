@@ -430,6 +430,7 @@ long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 	short tmp = 0;
 	long total_kmers = 0;
 
+
 	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
 	{
 		if((i + KMERWINDOWSIZE) < params->this_sonic->chromosome_lengths[chr_index])

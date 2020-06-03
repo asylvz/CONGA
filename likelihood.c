@@ -143,6 +143,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 			gc_val = (int)round ( sonic_get_gc_content(params->this_sonic, chr_name, i, i + KMERWINDOWSIZE));
 			expected_kmer += in_bam->expected_kmer[gc_val];
 			//totalReadCount_kmer += kmer_count_interval(params, chr_name, i, i + KMERWINDOWSIZE);
+			//fprintf(stderr,"i = %d\t total = %d\n",i, totalReadCount_kmer);
 			totalReadCount_kmer += in_bam->kmer[i];
 		}
 		arr[count].k_mer = totalReadCount_kmer;
@@ -362,22 +363,26 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		kmer_hash_size = read_kmer_jellyfish(params);
 
 		//fprintf(stderr,"\nHash size %d\n", kmer_hash_size);
-		if(kmer_hash_size > MINKMERHASHSIZE)
+		if(kmer_hash_size < MINKMERHASHSIZE)
 		{
-			readReferenceSeq(params, chr_index);
-
-			init_kmer_per_chr(in_bam, params, chr_index);
-
-			fprintf(stderr,"-->calculating k-mer counts");
-			total_kmers = calc_kmer_counts(in_bam, params, chr_index);
-			fprintf(stderr," (%li kmers)\n", total_kmers);
-
-			fprintf(stderr,"-->calculating expected counts\n");
-			calc_expected_kmer(in_bam, params, chr_index);
-
-			free(params->ref_seq);
-			params->ref_seq = NULL;
+			free(in_bam->rd_unfiltered);
+			return;
 		}
+
+		readReferenceSeq(params, chr_index);
+
+		init_kmer_per_chr(in_bam, params, chr_index);
+
+		fprintf(stderr,"-->calculating k-mer counts");
+		total_kmers = calc_kmer_counts(in_bam, params, chr_index);
+		fprintf(stderr," (%li kmers)\n", total_kmers);
+
+		fprintf(stderr,"-->calculating expected counts\n");
+		calc_expected_kmer(in_bam, params, chr_index);
+
+		free(params->ref_seq);
+		params->ref_seq = NULL;
+
 	}
 
 	//Check mappability
