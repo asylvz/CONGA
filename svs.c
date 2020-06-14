@@ -11,7 +11,7 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 	char line[512];
 	char *sv_start, *sv_end, *chr_name;
 	int start_sv, end_sv;
-	FILE *sv_file_del, *sv_file_dup;
+	FILE *sv_file_del = NULL, *sv_file_dup = NULL;
 
 	if(params->del_file != NULL)
 		sv_file_del = safe_fopen(params->del_file, "r");

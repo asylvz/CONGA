@@ -33,9 +33,9 @@ int firstPrime(int n)
 void free_hash_table_kmer(parameters *params)
 {
 	int i;
-	int hash_size = params->hash_size_kmer;
-	HashInfo *tmp, *tmp_next;
-	for(i = 0; i < hash_size; i++)
+
+	HashInfo *tmp = NULL, *tmp_next = NULL;
+	for(i = 0; i < params->hash_size_kmer; i++)
 	{
 		tmp = hash_table_kmer[i];
 		while(tmp != NULL)
@@ -46,19 +46,22 @@ void free_hash_table_kmer(parameters *params)
 		}
 	}
 	free(hash_table_kmer);
+	hash_table_kmer = NULL;
 }
 
 int is_kmer_valid_likelihood (char *str)
 {
-	int i, l = -1;
+	int i, l = 0;
 	l = (int) strlen(str);
 
 	if (l != KMER)
 		return 0;
 
 	for (i = 0; i < KMER; i++)
+	{
 		if (str[i] != 'A' && str[i] != 'C' && str[i] != 'G' && str[i] != 'T')
 			return 0;
+	}
 
 	return 1;
 }
@@ -124,7 +127,7 @@ int read_kmer_jellyfish( parameters *params)
 	hash_size = firstPrime(mer_count * 1.2);
 	params->hash_size_kmer = hash_size;
 
-	hash_table_kmer = (HashInfo **) getMem (hash_size * sizeof (HashInfo*));
+	hash_table_kmer = (HashInfo **) getMem ((hash_size + 1) * sizeof (HashInfo*));
 
 	for(i = 0; i < hash_size; i++)
 		hash_table_kmer[i] = NULL;
@@ -192,18 +195,7 @@ int read_kmer_jellyfish( parameters *params)
 		i++;
 	}
 	fclose(fp_reads);
-	//fclose(tmp_file);
 
-	/*
-	for(i = 0; i < hash_size; i++)
-	{
-		HashInfo *tmp = hash_table_kmer[i];
-		while(tmp != NULL)
-		{
-			fprintf(stderr,"%u\t %d\n",tmp->hash2, tmp->freq);
-			tmp = tmp->next;
-		}
-	}*/
 	return hash_size;
 }
 
@@ -223,105 +215,6 @@ char* read_ref_seq( parameters *params, char* chr_name, int start, int end)
 
 	return ref_seq;
 }
-/*
-int query_jellyfish(char* str, int count, char type)
-{
-	int k = 0, z, freq = 0, freq_sum = 0;
-	FILE *fd;
-	fd = popen(str, "r");
-	char* ptr_tok = NULL;
-	char buffer[256];
-	size_t chread;
-
-	if (!fd) return -1;
-
-	while ((chread = fread(buffer, 1, sizeof(buffer), fd)) != 0)
-	{
-		k++;
-		if(k == JELLYWINDOWSIZE)
-			break;
-		//fprintf(stderr,"Line: %s\n\n", comout);
-		ptr_tok = strtok(buffer, " ");
-		z = 0;
-		freq = 0;
-		while (ptr_tok != NULL)
-		{
-			if(z == 1)
-			{
-				//fprintf(stderr,"String: %s\t", ptr_tok);
-				freq = atoi(ptr_tok);
-				break;
-			}
-			ptr_tok = strtok(NULL, " ");
-			z++;
-		}
-		freq_sum += freq;
-	}
-	pclose(fd);
-	if(type == DELETION)
-		all_svs_del[count].k_mer += freq_sum;
-	else
-		all_svs_dup[count].k_mer += freq_sum;
-
-	return 1;
-}*/
-
-
-/*int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int total_variant, char type)
-{
-	int variation_length, i, j = 0, freq;
-	char* seq = NULL, *seq_tmp = NULL;
-	char cmd_jelly[(JELLYWINDOWSIZE * (KMER + 2))];
-
-	if(type == DELETION)
-	{
-		variation_length = all_svs_del[count].end - all_svs_del[count].start + 1;
-		seq = read_ref_seq(params, chr_name, all_svs_del[count].start, all_svs_del[count].end);
-	}
-	else
-	{
-		variation_length = all_svs_dup[count].end - all_svs_dup[count].start + 1;
-		seq = read_ref_seq(params, chr_name, all_svs_dup[count].start, all_svs_dup[count].end);
-	}
-
-	fprintf(stderr,"%d of %d (size = %d)\n", count, total_variant, variation_length);
-
-	for(i = 0; i < variation_length - KMER; i += 10)
-	{
-		if(j > JELLYWINDOWSIZE || i == 0)
-		{
-			if(j > JELLYWINDOWSIZE)
-			{
-				//fprintf(stderr,"%s\n\n", cmd_jelly);
-				query_jellyfish(cmd_jelly, count, type);
-			}
-			cmd_jelly[0] = '\0';
-			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish query mer_counts.jf");
-			j = 0;
-		}
-		else
-		{
-			seq_tmp = substring(seq, i, KMER);
-			//fprintf(stderr,"%d - %s\n", j, seq_tmp);
-			if(is_kmer_valid_likelihood(seq_tmp) != 0)
-			{
-				strncat(cmd_jelly, seq_tmp, KMER + 1);
-				j++;
-			}
-			else
-			{
-				//fprintf(stderr,"ERROR SIZE=%d\t%s",(int) strlen(seq_tmp), seq_tmp);
-				continue;
-			}
-		}
-	}
-	if(seq != NULL)
-	{
-		free(seq);
-		seq = NULL;
-	}
-	return 1;
-}*/
 
 
 int kmer_count_interval(parameters *params, int start, int end)
@@ -330,12 +223,10 @@ int kmer_count_interval(parameters *params, int start, int end)
 	char *seq_tmp = NULL, *seq_tmp_rev = NULL;
 	int hash[4];
 	char seq[KMERWINDOWSIZE + 10];
-	//char* seq = NULL;
 	unsigned int hash_val1, hash_val2;
 	HashInfo *tmp = NULL;
 	int kmer_count_forward = 0, kmer_count_reverse = 0;
 	int is_kmer_valid = 0;
-
 
 	variation_length = end - start + 1;
 
@@ -352,8 +243,6 @@ int kmer_count_interval(parameters *params, int start, int end)
 	{
 		// For forward strand
 		seq_tmp = substring(seq, i, KMER);
-		//if(seq_tmp == NULL)
-		//continue;
 
 		is_kmer_valid = is_kmer_valid_likelihood(seq_tmp);
 		if(!is_kmer_valid)
@@ -420,19 +309,21 @@ int kmer_count_interval(parameters *params, int start, int end)
 
 void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 {
-	in_bam->kmer = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	in_bam->kmer = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
 	memset (in_bam->kmer, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
 long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 {
-	int i, j, end = -1;
+	int i, j, end;
 	short tmp = 0;
 	long total_kmers = 0;
 
 
 	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
 	{
+		end = i;
+
 		if((i + KMERWINDOWSIZE) < params->this_sonic->chromosome_lengths[chr_index])
 			end = i + KMERWINDOWSIZE;
 		else

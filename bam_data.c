@@ -221,8 +221,6 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 		}
 		/*if(bam_alignment_core.qual > params->mq_threshold)
 		{
-
-
 			// Increase the read depth and read count for RD filtering
 			in_bam->rd_filtered[bam_alignment_core.pos]++;
 			in_bam->total_read_count_filtered++;
@@ -390,7 +388,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		exit( 1);
 	}
 
-	bam_hdr_destroy( in_bam->bam_header);
+	bam_hdr_destroy(in_bam->bam_header);
 	hts_idx_destroy(in_bam->bam_file_index);
 
 	fprintf( stderr, "\n");

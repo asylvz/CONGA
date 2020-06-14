@@ -354,7 +354,7 @@ void get_sample_name(bam_info* in_bam, char* header_text)
 	free( tmp_header);
 }
 
-char *substring(char *string, int position, int length)
+char *substring(char *str, int position, int length)
 {
 	char *pointer;
 	int c;
@@ -371,8 +371,8 @@ char *substring(char *string, int position, int length)
 	//*(pointer) = ' ';
 	for (c = 0 ; c < length ; c++)
 	{
-		*(pointer + c) = *(string + position - 1);
-		string++;
+		*(pointer + c) = *(str + position - 1);
+		str++;
 	}
 
 	*(pointer + c) = '\0';
@@ -409,7 +409,7 @@ char* reverseComplement( char* str)
 {
 	int i;
 	char* str2 = NULL;
-	char tmp;
+	char tmp = 'X';
 
 	set_str( &str2, str);
 	reverse_string(str2);
@@ -462,6 +462,5 @@ long readReferenceSeq( parameters *params, int chr_index)
 	fai_destroy(ref_fai);
 
 	params->ref_seq[bp_cnt] = '\0';
-
 	return bp_cnt;
 }

@@ -18,13 +18,13 @@ void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 
 	// For all the reads in the chromosome
 	in_bam->total_read_count_unfiltered = 0;
-	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
 	memset (in_bam->rd_unfiltered, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
 void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
 {
-	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
 	memset (in_bam->mappability, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(float)));
 }
 
@@ -53,7 +53,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 
 void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 {
-	int lib_index, i, gc_val = -1, window_per_gc[101], end;
+	int lib_index, i, gc_val = -1, window_per_gc[101], end = 0;
 	long rd_per_gc_unfiltered[101];
 	//long rd_per_gc_filtered[101];
 
