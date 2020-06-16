@@ -203,8 +203,8 @@ void calculate_expected_CN( bam_info *in_bam, parameters *params, svs arr[], int
 
 		totalReadCount += ( float)in_bam->rd_unfiltered[i];
 	}
-	if(type == DUPLICATION)
-		fprintf(stderr,"%lf - %lf\n", totalReadCount, expectedReadCount);
+	//if(type == DUPLICATION)
+		//fprintf(stderr,"%lf - %lf\n", totalReadCount, expectedReadCount);
 
 	arr[count].copy_number = ( float)( 2 * totalReadCount) / ( float)( expectedReadCount);
 }
@@ -260,7 +260,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 		}
 		else
 		{
-			if(all_svs_dup[count].likelihood_unfiltered < 0.5 && all_svs_dup[count].mappability > 0.5 && all_svs_del[count].likelihood_kmer < 5)
+			if(all_svs_dup[count].likelihood_unfiltered < 0.5 && all_svs_dup[count].mappability > 0.5 && all_svs_del[count].likelihood_kmer < 10)
 			{
 				//fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2lf\t%.1f\t%.1f\t%d\t%d\t%f\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].likelihood_filtered, all_svs_dup[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].k_mer, all_svs_dup[count].likelihood_kmer);
 				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2f\t%.2lf\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].likelihood_kmer, all_svs_dup[count].rp, all_svs_dup[count].mappability);
