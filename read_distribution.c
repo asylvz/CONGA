@@ -18,13 +18,13 @@ void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 
 	// For all the reads in the chromosome
 	in_bam->total_read_count_unfiltered = 0;
-	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
+	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
 	memset (in_bam->rd_unfiltered, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
 void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
 {
-	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
+	in_bam->mappability = ( float*) getMem( sizeof( float) * ( param->this_sonic->chromosome_lengths[chr_index]));
 	memset (in_bam->mappability, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(float)));
 }
 

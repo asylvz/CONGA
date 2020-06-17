@@ -38,7 +38,7 @@ int is_kmer_valid_likelihood (char *str);
 int calculate_kmers_jellyfish(parameters *params, char* chr_name, int count, int total_variant, char type);
 void read_kmer_seqs( parameters *params, int base_count, int mode);
 void init_hash_count_kmer(parameters *params);
-int kmer_count_interval(parameters *params, int start, int end);
+int kmer_count_interval(long hash_size_kmer, int variation_lenght, char* seq);
 void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index);
 void calc_expected_kmer(bam_info *in_bam, parameters *params, int chr_index);
 long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index);

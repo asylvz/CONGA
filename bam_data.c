@@ -182,6 +182,7 @@ int write_sequences(parameters *params, bam1_t* bam_alignment, FILE* fp, int bas
 		k++;
 	}
 	base_count += k;
+
 	str[k] = '\0';
 
 	if(str != NULL)
@@ -200,8 +201,8 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 	int cnt_reads = 0;
 
 	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
-	fpSeq = safe_fopen( seq_file,"w");
-	fprintf(fpSeq,">Sequences in your bam\n");
+	fpSeq = safe_fopen( seq_file, "w");
+	fprintf(fpSeq, ">Sequences in your bam\n");
 
 	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
@@ -213,18 +214,13 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 			if( !params->no_sr && bam_alignment_core.l_qseq > params->min_read_length)
 				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
 
-
 			/*Write to a text file*/
 			if(!params->no_kmer)
-				(*base_count_bam) = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
-
+			{
+				int tmp = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
+				(*base_count_bam) = tmp;
+			}
 		}
-		/*if(bam_alignment_core.qual > params->mq_threshold)
-		{
-			// Increase the read depth and read count for RD filtering
-			in_bam->rd_filtered[bam_alignment_core.pos]++;
-			in_bam->total_read_count_filtered++;
-		}*/
 
 		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
 		in_bam->total_read_count_unfiltered++;
@@ -343,7 +339,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if(!params->no_kmer)
 		{
 			fprintf(stderr, "\nRunning Jellyfish (creating %s%s_seqs.fa)\n", params->outdir, params->outprefix);
-			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish count -m %d -s 200M -C -t 4 %s%s_seqs.fa --out-counter-len 1", KMER, params->outdir, params->outprefix);
+			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish count -m %d -s 200M -C -t 10 %s%s_seqs.fa --out-counter-len 1", KMER, params->outdir, params->outprefix);
 			int return_value = system(cmd_jelly);
 
 			if(return_value != -1)

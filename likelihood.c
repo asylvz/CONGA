@@ -341,9 +341,6 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 			return;
 		}
 
-		long bp_count = readReferenceSeq(params, chr_index);
-		//fprintf(stderr,"%li\n", bp_count);
-
 		init_kmer_per_chr(in_bam, params, chr_index);
 
 		fprintf(stderr,"-->calculating k-mer counts");
@@ -355,8 +352,8 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		fprintf(stderr,"-->calculating expected counts\n");
 		calc_expected_kmer(in_bam, params, chr_index);
 
-		free(params->ref_seq);
-		params->ref_seq = NULL;
+		//free(params->ref_seq);
+		//params->ref_seq = NULL;
 	}
 
 	//Check mappability

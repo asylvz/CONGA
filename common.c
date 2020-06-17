@@ -356,7 +356,7 @@ void get_sample_name(bam_info* in_bam, char* header_text)
 
 char *substring(char *str, int position, int length)
 {
-	char *pointer;
+	char *pointer = NULL;
 	int c;
 
 	pointer = (char*) getMem(sizeof(char) * length + 1);
@@ -368,7 +368,7 @@ char *substring(char *str, int position, int length)
 	}
 	//Adds one space character at the beginning for jellyfish -don't forget-
 
-	//*(pointer) = ' ';
+	//(pointer) = ' ';
 	for (c = 0 ; c < length ; c++)
 	{
 		*(pointer + c) = *(str + position - 1);
@@ -376,6 +376,8 @@ char *substring(char *str, int position, int length)
 	}
 
 	*(pointer + c) = '\0';
+
+	//strncpy( pointer, str, length);
 
 	return pointer;
 }
@@ -463,4 +465,60 @@ long readReferenceSeq( parameters *params, int chr_index)
 
 	params->ref_seq[bp_cnt] = '\0';
 	return bp_cnt;
+}
+
+char* get_refseq( parameters *params, char* chr_name, int start, int end)
+{
+	int i, min, max, loc_length, chr_index;
+	char *ref_seq;
+	long bp_cnt = 0;
+	faidx_t* ref_fai;
+
+	chr_index = sonic_refind_chromosome_index( params->this_sonic, chr_name);
+	min = start;
+	max = end;
+
+	ref_fai = fai_load( params->ref_genome);
+	ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
+
+	fai_destroy( ref_fai);
+
+	return ref_seq;
+}
+
+char* read_ref( parameters *params, int chr_index)
+{
+	int i, min, max, loc_length;
+	char *ref_seq;
+	long bp_cnt = 0;
+	faidx_t* ref_fai;
+	char* seq = NULL;
+
+	min = 0, max = 999;
+	ref_fai = fai_load( params->ref_genome);
+
+	seq = ( char *) getMem( (params->this_sonic->chromosome_lengths[chr_index] + 1) * sizeof( char));
+
+	while ( max < params->this_sonic->chromosome_lengths[chr_index])
+	{
+		ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
+
+		for( i = 0; i < loc_length; i++)
+		{
+			/* can we do this faster with memcpy? */
+			if( bp_cnt < params->this_sonic->chromosome_lengths[chr_index])
+				seq[bp_cnt] = toupper( ref_seq[i]);
+			bp_cnt++;
+		}
+		if( bp_cnt >= params->this_sonic->chromosome_lengths[chr_index])
+			break;
+
+		min += loc_length;
+		max += loc_length;
+		free(ref_seq);
+	}
+	fai_destroy(ref_fai);
+
+	seq[bp_cnt] = '\0';
+	return seq;
 }

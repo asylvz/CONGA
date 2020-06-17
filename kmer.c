@@ -217,26 +217,15 @@ char* read_ref_seq( parameters *params, char* chr_name, int start, int end)
 }
 
 
-int kmer_count_interval(parameters *params, int start, int end)
+int kmer_count_interval(long hash_size_kmer, int variation_length, char* seq)
 {
-	int variation_length, i, j;
+	int i, j;
 	char *seq_tmp = NULL, *seq_tmp_rev = NULL;
 	int hash[4];
-	char seq[KMERWINDOWSIZE + 10];
 	unsigned int hash_val1, hash_val2;
 	HashInfo *tmp = NULL;
 	int kmer_count_forward = 0, kmer_count_reverse = 0;
 	int is_kmer_valid = 0;
-
-	variation_length = end - start + 1;
-
-	j = 0;
-	for(i = start; i < end; i++)
-	{
-		seq[j] = params->ref_seq[i];
-		j++;
-	}
-	seq[j] = '\0';
 
 
 	for(i = 0; i < variation_length - KMER; i += KMERSLIDE)
@@ -247,15 +236,18 @@ int kmer_count_interval(parameters *params, int start, int end)
 		is_kmer_valid = is_kmer_valid_likelihood(seq_tmp);
 		if(!is_kmer_valid)
 		{
-			free(seq_tmp);
+			if(seq_tmp != NULL)
+				free(seq_tmp);
 			continue;
 		}
+		//fprintf(stderr,"HEREE\n");
+		//fprintf(stderr,"%s\n",seq_tmp);
 
 		MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 42, hash);
-		hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
+		hash_val1 = (unsigned) hash[0] % hash_size_kmer;
 
 		MurmurHash3_x86_128(seq_tmp, strlen(seq_tmp), 11, hash);
-		hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
+		hash_val2 = (unsigned) hash[0] % hash_size_kmer;
 		//fprintf(stderr,"%u - %u\n", hash_val1, hash_val2);
 
 		tmp = hash_table_kmer[hash_val1];
@@ -271,21 +263,28 @@ int kmer_count_interval(parameters *params, int start, int end)
 
 		//For reverse strand
 		seq_tmp_rev = reverseComplement(seq_tmp);
-		//if(seq_tmp_rev == NULL)
-		//continue;
 
 		is_kmer_valid = is_kmer_valid_likelihood(seq_tmp_rev);
 		if(!is_kmer_valid)
 		{
-			free(seq_tmp_rev);
+			if(seq_tmp_rev != NULL)
+			{
+				free(seq_tmp_rev);
+				seq_tmp_rev = NULL;
+			}
+			if(seq_tmp != NULL)
+			{
+				free(seq_tmp);
+				seq_tmp = NULL;
+			}
 			continue;
 		}
-
+		//fprintf(stderr,"REV = %s\n",seq_tmp_rev);
 		MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 42, hash);
-		hash_val1 = (unsigned) hash[0] % params->hash_size_kmer;
+		hash_val1 = (unsigned) hash[0] % hash_size_kmer;
 
 		MurmurHash3_x86_128(seq_tmp_rev, strlen(seq_tmp_rev), 11, hash);
-		hash_val2 = (unsigned) hash[0] % params->hash_size_kmer;
+		hash_val2 = (unsigned) hash[0] % hash_size_kmer;
 
 		free(seq_tmp);
 		seq_tmp = NULL;
@@ -309,16 +308,20 @@ int kmer_count_interval(parameters *params, int start, int end)
 
 void init_kmer_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 {
-	in_bam->kmer = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index] + 1));
+	in_bam->kmer = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
 	memset (in_bam->kmer, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
 long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 {
-	int i, j, end;
+	int i, j, k, end;
 	short tmp = 0;
 	long total_kmers = 0;
+	char* seq = NULL;
+	//char *sub_seq = NULL;
+	char sub_seq[KMERWINDOWSIZE + 10];
 
+	seq = read_ref(params, chr_index);
 
 	for( i = 0; i < params->this_sonic->chromosome_lengths[chr_index]; i += KMERWINDOWSLIDE)
 	{
@@ -329,12 +332,33 @@ long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 		else
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
+		//sub_seq = ( char*) getMem( sizeof( char) * ((end - i) + 1));
+
+		k = 0;
+		for(j = i; j < end; j++)
+		{
+			sub_seq[k] = seq[j];
+			k++;
+		}
+		sub_seq[k] = '\0';
+
 		tmp = 0;
-		tmp = (short) kmer_count_interval(params, i, end);
+		tmp = (short) kmer_count_interval(params->hash_size_kmer, end - i + 1, sub_seq);
 		total_kmers += (long) tmp;
-		for(j = 0; j < KMERWINDOWSLIDE; j++)
+
+		for(j = 0; j < (end - i); j++)
 			in_bam->kmer[i + j] = tmp;
+
+		//sub_seq[0] = '\0';
+		memset(&sub_seq[0], 0, sizeof(sub_seq));
 	}
+	//fprintf(stderr,"here3");
+
+	if(seq != NULL)
+		free(seq);
+	seq = NULL;
+	//fprintf(stderr,"here4");
+
 	return total_kmers;
 }
 
@@ -359,7 +383,6 @@ void calc_expected_kmer(bam_info *in_bam, parameters *params, int chr_index)
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
 		gc_val = (int) round (sonic_get_gc_content(params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
-		//in_bam->kmer[i] = (short) kmer_count_interval(params, chr_name, i, end);
 		rd_per_gc[gc_val] += (long) in_bam->kmer[i];
 		window_per_gc[gc_val]++;
 	}

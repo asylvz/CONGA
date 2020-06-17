@@ -14,7 +14,7 @@
 
 #define KMER 33
 #define KMERSLIDE 5
-#define MINKMERHASHSIZE 10
+#define MINKMERHASHSIZE 20
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -158,6 +158,8 @@ void get_sample_name(bam_info* in_bam, char* header_text);
 char *substring(char *string, int position, int length);
 char* reverseComplement( char* str);
 long readReferenceSeq( parameters *params, int chr_index);
+char* get_refseq( parameters *params, char* chr_name, int start, int end);
+char* read_ref( parameters *params, int chr_index);
 
 // Memory allocation/tracking functions
 void* getMem( size_t size);
