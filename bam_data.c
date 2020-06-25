@@ -19,7 +19,6 @@ SplitRow *createSplitRow(int locMapLeftStart, int locMapLeftEnd, char orientatio
 	newRow->locMapLeftStart = locMapLeftStart;
 	newRow->locMapRightStart = locMapRightStart;
 	newRow->locMapRightEnd = locMapRightEnd;
-
 	newRow->orientationLeft = orientationLeft;
 	newRow->orientationRight = orientationRight;
 

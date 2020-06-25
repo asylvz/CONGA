@@ -332,8 +332,6 @@ long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 		else
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
-		//sub_seq = ( char*) getMem( sizeof( char) * ((end - i) + 1));
-
 		k = 0;
 		for(j = i; j < end; j++)
 		{
@@ -352,12 +350,10 @@ long calc_kmer_counts(bam_info *in_bam, parameters *params, int chr_index)
 		//sub_seq[0] = '\0';
 		memset(&sub_seq[0], 0, sizeof(sub_seq));
 	}
-	//fprintf(stderr,"here3");
 
 	if(seq != NULL)
 		free(seq);
 	seq = NULL;
-	//fprintf(stderr,"here4");
 
 	return total_kmers;
 }

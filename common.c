@@ -377,8 +377,6 @@ char *substring(char *str, int position, int length)
 
 	*(pointer + c) = '\0';
 
-	//strncpy( pointer, str, length);
-
 	return pointer;
 }
 
