@@ -245,7 +245,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 
 		if(!params->no_sr)
 		{
-			if(all_svs_dup[count].likelihood_unfiltered < 100 && all_svs_dup[count].rp > 10)
+			if(all_svs_dup[count].likelihood_unfiltered < 20 && all_svs_dup[count].rp > 20)
 			{
 				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.1f\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
 				sv_cnt_dup++;
