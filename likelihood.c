@@ -126,7 +126,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 	if(params->mappability_file != NULL)
 		arr[count].mappability = mappability_score / (double) (arr[count].end - arr[count].start);
 
-	if(!params->no_kmer)
+	/*if(!params->no_kmer)
 	{
 		for(i = arr[count].start; i < arr[count].end; i += KMERWINDOWSLIDE)
 		{
@@ -154,7 +154,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 			all_svs_dup[count].likelihood_kmer = max(lhomo, lhete) / lnone;
 		}
 		//fprintf(stderr,"%d - %lf - %lf\n", totalReadCount_kmer, expected_kmer, arr[count].likelihood_kmer);
-	}
+	}*/
 
 	if(type == DELETION)
 	{
@@ -163,7 +163,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		lnone = lpoisson(observed_rd_unfiltered, expected_rd_unfiltered);
 
 		score = max(lhomo, lhete) / lnone;
-		fprintf(stderr,"%lf - %lf - %lf - %lf\n", lhomo, lhete, lnone, score);
+		//fprintf(stderr,"%lf - %lf - %lf - %lf\n", lhomo, lhete, lnone, score);
 
 		arr[count].likelihood_unfiltered = score;
 		arr[count].observed_rd_all = observed_rd_unfiltered;

@@ -318,10 +318,10 @@ void read_bam( bam_info* in_bam, parameters *params)
 			create_hash_table(params, bp_cnt);
 		}
 
-		/* Read bam file for this chromosome
+		/* Read bam file for this chromosome */
 		fprintf(stderr,"\n-->counting reads");
 		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
-		*/
+
 		if(!params->no_sr)
 			free_hash_table(params);
 
