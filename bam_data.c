@@ -243,17 +243,17 @@ void read_bam( bam_info* in_bam, parameters *params)
 	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
-	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
+	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output Del file: %s\n", svfile_del);
 	fpDel = safe_fopen( svfile_del,"w");
-	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
+	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 	sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 	fpDup = safe_fopen( svfile_dup,"w");
-	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tKMER_LIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
+	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 
 	/* HTS implementation */
@@ -318,10 +318,10 @@ void read_bam( bam_info* in_bam, parameters *params)
 			create_hash_table(params, bp_cnt);
 		}
 
-		/* Read bam file for this chromosome */
+		/* Read bam file for this chromosome
 		fprintf(stderr,"\n-->counting reads");
 		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
-
+		*/
 		if(!params->no_sr)
 			free_hash_table(params);
 
@@ -334,7 +334,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if( not_in_bam == 1)
 			continue;
 
-		/*Run JellyFish */
+		/*Run JellyFish
 		if(!params->no_kmer)
 		{
 			fprintf(stderr, "\nRunning Jellyfish (creating %s%s_seqs.fa)\n", params->outdir, params->outprefix);
@@ -362,7 +362,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 				fprintf(stderr, "Problem in running Jellyfish (dump)\n");
 				exit(1);
 			}
-		}
+		}*/
 
 		//Load Split-Reads
 		if(!params->no_sr)

@@ -163,6 +163,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		lnone = lpoisson(observed_rd_unfiltered, expected_rd_unfiltered);
 
 		score = max(lhomo, lhete) / lnone;
+		fprintf(stderr,"%lf - %lf - %lf - %lf\n", lhomo, lhete, lnone, score);
 
 		arr[count].likelihood_unfiltered = score;
 		arr[count].observed_rd_all = observed_rd_unfiltered;
@@ -218,21 +219,21 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 	//qsort( all_svs, sv_count, sizeof( int), compare_start_pos);
 	for( count = 0; count < del_count; count++)
 	{
-		fprintf(fp_del,"%s\t%d\t%d\t%.1f\t%.2f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp, all_svs_del[count].mappability);
+		fprintf(fp_del,"%s\t%d\t%d\t%.1f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability);
 
 		if(params->mappability_file != NULL)
 		{
-			if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].mappability > 0.5 && all_svs_del[count].likelihood_kmer < 10)
+			if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].mappability > 0.5)
 			{
-				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp, all_svs_del[count].mappability);
+				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability);
 				sv_cnt_del++;
 			}
 		}
 		else
 		{
-			if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].likelihood_kmer < 10)
+			if(all_svs_del[count].likelihood_unfiltered < 0.5)
 			{
-				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].likelihood_kmer, all_svs_del[count].rp);
+				fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%.1f\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].copy_number, all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp);
 				sv_cnt_del++;
 			}
 		}
@@ -240,21 +241,21 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 
 	for( count = 0; count < dup_count; count++)
 	{
-		fprintf(fp_dup,"%s\t%d\t%d\t%.1f\t%.2lf\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].likelihood_kmer, all_svs_dup[count].rp, all_svs_dup[count].mappability);
+		fprintf(fp_dup,"%s\t%d\t%d\t%.1f\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
 
 		if(!params->no_sr)
 		{
-			if(all_svs_dup[count].likelihood_unfiltered < 0.5 && all_svs_dup[count].likelihood_kmer < 5 && all_svs_dup[count].rp > 20 && all_svs_dup[count].mappability > 0.5)
+			if(all_svs_dup[count].likelihood_unfiltered < 100 && all_svs_dup[count].rp > 10)
 			{
-				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.1f\t%.2lf\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].likelihood_kmer, all_svs_dup[count].rp, all_svs_dup[count].mappability);
+				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.1f\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
 				sv_cnt_dup++;
 			}
 		}
 		else
 		{
-			if(all_svs_dup[count].likelihood_unfiltered < 0.5 && all_svs_dup[count].mappability > 0.5 && all_svs_dup[count].likelihood_kmer < 10)
+			if(all_svs_dup[count].likelihood_unfiltered < 1)
 			{
-				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2f\t%.2lf\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].likelihood_kmer, all_svs_dup[count].rp, all_svs_dup[count].mappability);
+				fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%.2f\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, all_svs_dup[count].copy_number, all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
 				sv_cnt_dup++;
 			}
 		}
@@ -319,7 +320,7 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		free_splits(in_bam);
 	}
 
-	if(!params->no_kmer)
+	/*if(!params->no_kmer)
 	{
 		// Read the fastq file
 		fprintf(stderr,"\nReading K-MERS\n");
@@ -343,7 +344,7 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		fprintf(stderr,"-->calculating expected counts\n");
 		calc_expected_kmer(in_bam, params, chr_index);
 
-	}
+	}*/
 
 	//Check mappability
 	fprintf(stderr,"Finding mappability for each region\n");
@@ -361,11 +362,11 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	if(params->mappability_file != NULL)
 		free(in_bam->mappability);
 
-	if(!params->no_kmer)
+	/*if(!params->no_kmer)
 	{
 		free(in_bam->kmer);
 		in_bam->kmer = NULL;
-	}
+	}*/
 	//fprintf(stderr,"Outputting\n");
 	output_SVs(params, fp_SVs, fp_del, fp_dup);
 
