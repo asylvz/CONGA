@@ -1,9 +1,9 @@
-CONGA_VERSION := "0.2"
-CONGA_UPDATE := "April 4, 2020"
+CONGA_VERSION := "0.3"
+CONGA_UPDATE := "September 15, 2020"
 BUILD_DATE := "$(shell date)"
 CC=gcc
 CFLAGS =  -O3 -g -I htslib -I sonic -DCONGA_VERSION=\"$(CONGA_VERSION)\" -DBUILD_DATE=\"$(BUILD_DATE)\" -DCONGA_UPDATE=\"$(CONGA_UPDATE)\"
-LDFLAGS = htslib/libhts.a sonic/libsonic.a -lz -lm -lpthread -llzma -lbz2 -lcurl
+LDFLAGS = htslib/libhts.a sonic/libsonic.a -lz -lm -lpthread -llzma -lbz2 -lcurl -no-pie
 SOURCES = svdepth.c cmdline.c common.c bam_data.c read_distribution.c free.c likelihood.c svs.c split_read.c kmer.c mhash.c
 OBJECTS = $(SOURCES:.c=.o)
 EXECUTABLE = conga
