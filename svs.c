@@ -285,20 +285,26 @@ void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, cha
 			line[0] = '\0';
 			continue;
 		}
-		for(i = 0; i < del_count; i++)
+		if(params->del_file)
 		{
-			if((start_sv >= vars_del[i].start && start_sv <= vars_del[i].end) || (end_sv >= vars_del[i].start && end_sv <= vars_del[i].end))
+			for(i = 0; i < del_count; i++)
 			{
-				vars_del[i].low_mappability = true;
-				cnt_del++;
+				if((start_sv >= vars_del[i].start && start_sv <= vars_del[i].end) || (end_sv >= vars_del[i].start && end_sv <= vars_del[i].end))
+				{
+					vars_del[i].low_mappability = true;
+					cnt_del++;
+				}
 			}
 		}
-		for(i = 0; i < dup_count; i++)
+		if(!params->dup_file)
 		{
-			if((start_sv >= vars_dup[i].start && start_sv <= vars_dup[i].end) || (end_sv >= vars_dup[i].start && end_sv <= vars_dup[i].end))
+			for(i = 0; i < dup_count; i++)
 			{
-				vars_dup[i].low_mappability = true;
-				cnt_dup++;
+				if((start_sv >= vars_dup[i].start && start_sv <= vars_dup[i].end) || (end_sv >= vars_dup[i].start && end_sv <= vars_dup[i].end))
+				{
+					vars_dup[i].low_mappability = true;
+					cnt_dup++;
+				}
 			}
 		}
 		line[0] = '\0';

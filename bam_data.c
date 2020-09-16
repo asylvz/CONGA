@@ -210,15 +210,15 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 		if(sonic_is_satellite( params->this_sonic, params->this_sonic->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0
 				&& bam_alignment_core.qual > params->mq_threshold && is_proper( bam_alignment_core.flag))
 		{
-			if( !params->no_sr && bam_alignment_core.l_qseq > params->min_read_length)
+			if( !params->no_sr && params->dup_file && bam_alignment_core.l_qseq > params->min_read_length)
 				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
 
-			/*Write to a text file*/
+			/*Write to a text file
 			if(!params->no_kmer)
 			{
 				int tmp = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
 				(*base_count_bam) = tmp;
-			}
+			}*/
 		}
 
 		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
@@ -235,7 +235,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 void read_bam( bam_info* in_bam, parameters *params)
 {
 	int i, bam_index, chr_index, chr_index_bam, return_value, not_in_bam = 0;
-	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ], cmd_jelly[MAX_SEQ];
+	char svfile_del[MAX_SEQ], svfile_dup[MAX_SEQ], svfile[MAX_SEQ];
 	FILE *fpDel = NULL, *fpDup = NULL, *fpSVs = NULL;
 	int base_count_bam = 0;
 	long bp_cnt;
@@ -245,16 +245,20 @@ void read_bam( bam_info* in_bam, parameters *params)
 	fpSVs = safe_fopen( svfile,"w");
 	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
-	sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
-	fprintf( stderr, "Output Del file: %s\n", svfile_del);
-	fpDel = safe_fopen( svfile_del,"w");
-	fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
-
-	sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
-	fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
-	fpDup = safe_fopen( svfile_dup,"w");
-	fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
-
+	if(params->del_file)
+	{
+		sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
+		fprintf( stderr, "Output Del file: %s\n", svfile_del);
+		fpDel = safe_fopen( svfile_del,"w");
+		fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
+	}
+	if(params->dup_file)
+	{
+		sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
+		fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
+		fpDup = safe_fopen( svfile_dup,"w");
+		fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
+	}
 
 	/* HTS implementation */
 	in_bam->bam_file = safe_hts_open( params->bam_file, "r");
@@ -310,7 +314,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		/* Initialize the read depth and read count */
 		init_rd_per_chr( in_bam, params, chr_index);
 
-		if(!params->no_sr)
+		if(!params->no_sr && params->dup_file)
 		{
 			fprintf( stderr, "\nReading the Reference Genome");
 			bp_cnt = readReferenceSeq(params, chr_index);
@@ -322,7 +326,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		fprintf(stderr,"\n-->counting reads");
 		count_reads_bam( in_bam, params, chr_index, &base_count_bam);
 
-		if(!params->no_sr)
+		if(!params->no_sr && params->dup_file)
 			free_hash_table(params);
 
 		/* Mean value (mu) calculation */
@@ -365,7 +369,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 		}*/
 
 		//Load Split-Reads
-		if(!params->no_sr)
+		if(!params->no_sr && params->dup_file)
 		{
 			fprintf(stderr, "Loading Split-Reads\n");
 			read_SplitReads(in_bam->listSplitRead, params, chr_index);
@@ -387,7 +391,10 @@ void read_bam( bam_info* in_bam, parameters *params)
 	hts_idx_destroy(in_bam->bam_file_index);
 
 	fprintf( stderr, "\n");
-	fclose( fpDel);
-	fclose( fpDup);
+
+	if(fpDel)
+		fclose( fpDel);
+	if(fpDup)
+		fclose( fpDup);
 	fclose( fpSVs);
 }

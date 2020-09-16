@@ -55,7 +55,7 @@ int main( int argc, char** argv)
 	in_bam->sample_name = NULL;
 	in_bam->listSplitRead = NULL;
 
-	if(!params->no_sr)
+	if(!params->no_sr && params->dup_file)
 		init_hash_count( params);
 
 	//Find the depth of SVs

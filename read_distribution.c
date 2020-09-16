@@ -68,7 +68,6 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
 		gc_val = (int) round ( sonic_get_gc_content( params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
-		//rd_per_gc_filtered[gc_val] += ( long) in_bam->rd_filtered[i];
 		rd_per_gc_unfiltered[gc_val] += ( long) in_bam->rd_unfiltered[i];
 		window_per_gc[gc_val]++;
 	}
