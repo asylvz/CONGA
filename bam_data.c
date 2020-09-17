@@ -194,14 +194,14 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 {
 	bam1_core_t bam_alignment_core;
 	bam1_t* bam_alignment = bam_init1();
-	FILE *fpSeq = NULL;
+	//FILE *fpSeq = NULL;
 	char seq_file[MAX_SEQ];
 	int return_type;
 	int cnt_reads = 0;
 
-	sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
-	fpSeq = safe_fopen( seq_file, "w");
-	fprintf(fpSeq, ">Sequences in your bam\n");
+	//sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
+	//fpSeq = safe_fopen( seq_file, "w");
+	//fprintf(fpSeq, ">Sequences in your bam\n");
 
 	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
@@ -227,7 +227,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 
 	}
 	fprintf(stderr," (%d reads, %ld split-reads)\n", cnt_reads, split_read_count);
-	fclose(fpSeq);
+	//fclose(fpSeq);
 	bam_destroy1( bam_alignment);
 }
 
