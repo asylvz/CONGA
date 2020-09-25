@@ -22,7 +22,7 @@ typedef struct _svs
 	int border_rp;
 	int k_mer;
 	double expected_kmer;
-	float copy_number;
+	int copy_number;
 	//double likelihood_filtered;
 	double likelihood_kmer;
 	double likelihood_unfiltered;
