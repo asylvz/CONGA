@@ -229,10 +229,11 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 	{
 		for( count = 0; count < del_count; count++)
 		{
-			fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability);
 
 			if(params->mappability_file != NULL)
 			{
+				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability);
+
 				if(all_svs_del[count].likelihood_unfiltered < 0.5 && all_svs_del[count].mappability > 0.5)
 				{
 					fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%s\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp, all_svs_del[count].mappability);
@@ -241,6 +242,8 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			}
 			else
 			{
+				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp);
+
 				if(all_svs_del[count].likelihood_unfiltered < 0.5)
 				{
 					fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%s\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_unfiltered, all_svs_del[count].border_rp);
@@ -254,7 +257,11 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 	{
 		for( count = 0; count < dup_count; count++)
 		{
-			fprintf(fp_dup,"%s\t%d\t%d\t%s\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
+			if(params->mappability_file != NULL)
+				fprintf(fp_dup,"%s\t%d\t%d\t%s\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp, all_svs_dup[count].mappability);
+			else
+				fprintf(fp_dup,"%s\t%d\t%d\t%s\t%.2lf\t%d\tN/A\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_unfiltered, all_svs_dup[count].rp);
+
 
 			if(!params->no_sr && params->mappability_file != NULL)
 			{
