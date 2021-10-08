@@ -264,7 +264,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 	in_bam->bam_file = safe_hts_open( params->bam_file, "r");
 
 	/* Read in BAM header information */
-	in_bam->bam_header = bam_hdr_read( ( in_bam->bam_file->fp).bgzf);
+	in_bam->bam_header = sam_hdr_read( in_bam->bam_file);
 
 	/* Load the bam index file */
 	in_bam->bam_file_index = sam_index_load( in_bam->bam_file, params->bam_file);
