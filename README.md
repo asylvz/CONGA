@@ -84,8 +84,8 @@ All parameters
 	--no-sr					   : Split read mapping is disabled
 	
 	Information:
-	--version                  : Print version and exit.
-	--help                     : Print this help screen and exit.
+	--version                  		   : Print version and exit.
+	--help 		                           : Print this help screen and exit.
 
 
 Citation
