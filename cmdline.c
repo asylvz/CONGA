@@ -214,19 +214,21 @@ void print_help( void)
 	fprintf( stdout, "\n... CONGA (COpy Number Genotyping in Ancient genomes) ...\n");
 	fprintf( stdout, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 	fprintf( stdout, "\tParameters:\n\n");
-	fprintf( stdout, "\t--input [BAM file ]        	: Input file in sorted and indexed BAM format.\n");
-	fprintf( stdout, "\t--out   [output prefix]    	: Prefix for the output file names.\n");
-	fprintf( stdout, "\t--ref   [reference genome] 	: Reference genome in FASTA format.\n");
-	fprintf( stdout, "\t--sonic [sonic file]       	: SONIC file that contains assembly annotations.\n");
-	fprintf( stdout, "\t--dels [BED file]          	: Known deletion SVs in BED format\n");
-	fprintf( stdout, "\t--dups [BED file]          	: Known duplication SVs in BED format\n");
-	fprintf( stdout, "\t--mapability [BED file]     : Mappability file in BED format\n");
-	fprintf( stdout, "\t--min-read-length [int]    	: Minimum length of a read to be processed for RP (default: 60 bps)\n");
-	fprintf( stdout, "\t--min-sv-size [int]    		: Minimum length of a read to be processed (default: 1000 bps)\n");
-	fprintf( stdout, "\t--no-sr                     : Split read mapping is disabled\n");
+	fprintf( stdout, "\t--input [BAM file ]        		: Input file in sorted and indexed BAM format.\n");
+	fprintf( stdout, "\t--out   [output prefix]    		: Prefix for the output file names.\n");
+	fprintf( stdout, "\t--ref   [reference genome] 		: Reference genome in FASTA format.\n");
+	fprintf( stdout, "\t--sonic [sonic file]       		: SONIC file that contains assembly annotations.\n");
+	fprintf( stdout, "\t--dels [BED file]          		: Known deletion SVs in BED format\n");
+	fprintf( stdout, "\t--dups [BED file]          		: Known duplication SVs in BED format\n");
+	fprintf( stdout, "\t--first-chr [chromosome index]  : The index of the first chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--last-chr [chromosome index]   : The index of the last chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--mapability [BED file]     	: Mappability file in BED format\n");
+	fprintf( stdout, "\t--min-read-length [int]    		: Minimum length of a read to be processed for RP (default: 60 bps)\n");
+	fprintf( stdout, "\t--min-sv-size [int]    			: Minimum length of a CNV (default: 1000 bps)\n");
+	fprintf( stdout, "\t--no-sr                     	: Split read mapping is disabled\n");
 
 
 	fprintf( stdout, "\n\n\tInformation:\n");
-	fprintf( stdout, "\t--version                  : Print version and exit.\n");
-	fprintf( stdout, "\t--help                     : Print this help screen and exit.\n\n");
+	fprintf( stdout, "\t--version                  		: Print version and exit.\n");
+	fprintf( stdout, "\t--help                     		: Print this help screen and exit.\n\n");
 }
