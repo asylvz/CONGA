@@ -12,6 +12,7 @@
 // Track memory usage
 long long memUsage = 0;
 
+
 void init_params( parameters** params)
 {
 	int i;

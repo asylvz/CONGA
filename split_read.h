@@ -12,6 +12,8 @@
 
 #define MAX_SR_HIT 50000
 #define MAX_MAPPING 100
+#define HASH_COUNT 0
+#define HASH_BUILD 1
 
 #define HASHKMERLEN 10
 

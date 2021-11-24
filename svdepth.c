@@ -8,8 +8,6 @@
 #include "free.h"
 #include "read_distribution.h"
 #include "split_read.h"
-#include "mhash.h"
-#include "kmer.h"
 
 FILE *logFile = NULL;
 int total_dels = 0;

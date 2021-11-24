@@ -3,8 +3,7 @@
 #include "free.h"
 #include "likelihood.h"
 #include "split_read.h"
-#include "kmer.h"
-#include "mhash.h"
+
 
 struct SplitsInfo *all_split_reads = NULL;
 
@@ -193,15 +192,11 @@ int write_sequences(parameters *params, bam1_t* bam_alignment, FILE* fp, int bas
 void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* base_count_bam )
 {
 	bam1_core_t bam_alignment_core;
-	bam1_t* bam_alignment = bam_init1();
-	//FILE *fpSeq = NULL;
 	char seq_file[MAX_SEQ];
 	int return_type;
 	int cnt_reads = 0;
 
-	//sprintf( seq_file, "%s%s_seqs.fa", params->outdir, params->outprefix);
-	//fpSeq = safe_fopen( seq_file, "w");
-	//fprintf(fpSeq, ">Sequences in your bam\n");
+	bam1_t* bam_alignment = bam_init1();
 
 	while( sam_itr_next( in_bam->bam_file, in_bam->iter, bam_alignment) > 0)
 	{
@@ -211,14 +206,9 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 				&& bam_alignment_core.qual > params->mq_threshold && is_proper( bam_alignment_core.flag))
 		{
 			if( !params->no_sr && params->dup_file && bam_alignment_core.l_qseq > params->min_read_length)
-				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
-
-			/*Write to a text file
-			if(!params->no_kmer)
 			{
-				int tmp = write_sequences(params, bam_alignment, fpSeq, (*base_count_bam));
-				(*base_count_bam) = tmp;
-			}*/
+				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
+			}
 		}
 
 		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
@@ -227,7 +217,6 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 
 	}
 	fprintf(stderr," (%d reads, %ld split-reads)\n", cnt_reads, split_read_count);
-	//fclose(fpSeq);
 	bam_destroy1( bam_alignment);
 }
 
@@ -337,36 +326,6 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 		if( not_in_bam == 1)
 			continue;
-
-		/*Run JellyFish
-		if(!params->no_kmer)
-		{
-			fprintf(stderr, "\nRunning Jellyfish (creating %s%s_seqs.fa)\n", params->outdir, params->outprefix);
-			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish count -m %d -s 200M -C -t 10 %s%s_seqs.fa --out-counter-len 1", KMER, params->outdir, params->outprefix);
-			int return_value = system(cmd_jelly);
-
-			if(return_value != -1)
-			{
-				sprintf(cmd_jelly, "%s%s_seqs.fa", params->outdir, params->outprefix);
-				remove(cmd_jelly);
-			}
-			else
-			{
-				fprintf(stderr, "Problem in running Jellyfish (count)\n");
-				exit(1);
-			}
-
-			sprintf(cmd_jelly, "jellyfish-2.3.0/bin/jellyfish dump -L 5 mer_counts.jf > mer_counts.fa");
-			return_value = system(cmd_jelly);
-
-			if(return_value != -1)
-				remove("mer_counts.jf");
-			else
-			{
-				fprintf(stderr, "Problem in running Jellyfish (dump)\n");
-				exit(1);
-			}
-		}*/
 
 		//Load Split-Reads
 		if(!params->no_sr && params->dup_file)

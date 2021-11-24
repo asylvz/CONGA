@@ -1,16 +1,7 @@
-/*
- * split_read.c
- *
- *  Created on: Nov 18, 2019
- *      Author: tardis
- */
 
 #include "split_read.h"
 #include <htslib/faidx.h>
 #include <time.h>
-
-#define HASH_COUNT 0
-#define HASH_BUILD 1
 
 #define SR_LOOKAHEAD 100000
 

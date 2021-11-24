@@ -224,7 +224,7 @@ void print_help( void)
 	fprintf( stdout, "\t--min-read-length [int]    	: Minimum length of a read to be processed for RP (default: 60 bps)\n");
 	fprintf( stdout, "\t--min-sv-size [int]    		: Minimum length of a read to be processed (default: 1000 bps)\n");
 	fprintf( stdout, "\t--no-sr                     : Split read mapping is disabled\n");
-	fprintf( stdout, "\t--no-kmer                   : k-mer likelihood calculation is disabled (faster)\n");
+
 
 	fprintf( stdout, "\n\n\tInformation:\n");
 	fprintf( stdout, "\t--version                  : Print version and exit.\n");
