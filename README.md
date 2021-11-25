@@ -1,5 +1,4 @@
-CONGA 
-======
+# CONGA 
 (**CO**py **N**umber variation **G**enotyping in **A**ncient genomes) 
 
 CONGA is a genotyping algorithm for Copy Number Variations (large deletions and duplications) in ancient genomes. It is tailored for calling homozygous and heterozygous CNV genotypes at low depths of coverage using read-depth and read-pair information from a BAM file with Illumina short single-end reads.
@@ -7,8 +6,7 @@ CONGA is a genotyping algorithm for Copy Number Variations (large deletions and 
 Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an issue for your questions.
 
 
-Requirements
-============
+## Requirements
 
  * zlib   	(http://www.zlib.net)
  * htslib	(included as submodule; http://htslib.org/)
@@ -16,23 +14,17 @@ Requirements
 
 CONGA is developed and tested using Linux operating system... 
 
-Downloading CONGA
-===============
+## Downloading and running
 
 	git clone https://github.com/asylvz/CONGA --recursive
 	make libs
 	make
-	
-
-Running CONGA
-===========================
 
 	conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 
-The SONIC file
-=============
+## SONIC file (required)
 
 You need to input a SONIC file as input to CONGA (--sonic). This file contains some annotation based on the reference genome that you use. You can use one of the already created ones from: https://github.com/BilkentCompGen/sonic-prebuilt
 
@@ -43,8 +35,7 @@ You need to input a SONIC file as input to CONGA (--sonic). This file contains s
 If you are working with a different reference genome, you need to create the SONIC file yourself. This is a straightforward process; please refer to the SONIC development repository: https://github.com/calkan/sonic/
 
 
-Example Genotype file
-=====================
+## Example Genotype file (required)
 
 	1	668630		850204
 	1	963826		974172
@@ -57,13 +48,12 @@ Example Genotype file
 * This file should be seperate for duplications and deletions if both are to be genotyped.
 
 
-Mappability File
-================
+## Mappability File (optional)
+
 Using a mappability file (--mappability) increases the accuracy of CONGA's predictions. We used the 100-mer mappability file from http://hgdownload.cse.ucsc.edu/goldenpath/hg19/encodeDCC/wgEncodeMapability/ and converted the bigWig file into a a BED file using "bigWigToBedGraph".
 
 
-All parameters
-==============
+## All parameters
 
 	--input 		[BAM file]         : Input files in sorted and indexed BAM format. (required)
 	--out   		[output prefix]    : Prefix for the output file names. (required)
@@ -83,6 +73,6 @@ All parameters
 	--help 		                           : Print this help screen and exit.
 
 
-Citation
-========
+## Citation
+
 Currently under review...
