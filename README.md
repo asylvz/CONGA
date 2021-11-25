@@ -1,6 +1,6 @@
 CONGA 
 ======
-(COpy Number variation Genotyping in Ancient genomes) 
+(**CO**py **N**umber variation **G**enotyping in **A**ncient genomes) 
 
 CONGA is a genotyping algorithm for Copy Number Variations (large deletions and duplications) in ancient genomes. It is tailored for calling homozygous and heterozygous CNV genotypes at low depths of coverage using read-depth and read-pair information from a BAM file with Illumina short single-end reads.
 
