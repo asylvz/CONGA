@@ -9,7 +9,7 @@
 #define LAST_CHROM 10002
 
 
-int parse_command_line( int argc, char** argv, parameters* params)
+int parse_cmd_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
@@ -79,7 +79,7 @@ int parse_command_line( int argc, char** argv, parameters* params)
 
 		case 'h':
 			print_help();
-			return 0;
+			return EXIT_SUCCESS;
 			break;
 
 		case 'i':
@@ -116,9 +116,10 @@ int parse_command_line( int argc, char** argv, parameters* params)
 			break;
 
 		case 'v':
-			fprintf( stderr, "\n...CONGA....\n");
-			fprintf( stderr, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
-			return 0;
+			//fprintf( stderr, "\n...CONGA....\n");
+			fprintf( stderr, "\n\tCONGA Version %s\n\tLast update: %s, build date: %s\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
+			fprintf(stderr,"\tFor more information, check https://github.com/asylvz/CONGA\n\n");
+			return EXIT_SUCCESS;
 			break;
 
 		case 'x':
@@ -211,24 +212,24 @@ int parse_command_line( int argc, char** argv, parameters* params)
 
 void print_help( void)
 {  
-	fprintf( stdout, "\n... CONGA (COpy Number Genotyping in Ancient genomes) ...\n");
-	fprintf( stdout, "Version %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
-	fprintf( stdout, "\tParameters:\n\n");
-	fprintf( stdout, "\t--input [BAM file ]        		: Input file in sorted and indexed BAM format.\n");
-	fprintf( stdout, "\t--out   [output prefix]    		: Prefix for the output file names.\n");
-	fprintf( stdout, "\t--ref   [reference genome] 		: Reference genome in FASTA format.\n");
-	fprintf( stdout, "\t--sonic [sonic file]       		: SONIC file that contains assembly annotations.\n");
-	fprintf( stdout, "\t--dels [BED file]          		: Known deletion SVs in BED format\n");
-	fprintf( stdout, "\t--dups [BED file]          		: Known duplication SVs in BED format\n");
-	fprintf( stdout, "\t--first-chr [chromosome index]  : The index of the first chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--last-chr [chromosome index]   : The index of the last chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--mapability [BED file]     	: Mappability file in BED format\n");
-	fprintf( stdout, "\t--min-read-length [int]    		: Minimum length of a read to be processed for RP (default: 60 bps)\n");
-	fprintf( stdout, "\t--min-sv-size [int]    			: Minimum length of a CNV (default: 1000 bps)\n");
-	fprintf( stdout, "\t--no-sr                     	: Split read mapping is disabled\n");
-
+	fprintf( stdout, "\n\t... CONGA (COpy Number variation Genotyping in Ancient genomes) ...\n\n");
+	fprintf( stdout, "\tVersion %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
+	fprintf( stdout, "\tParameters:\n");
+	fprintf( stdout, "\t--input           [BAM file ]         : Input file in sorted and indexed BAM format (required).\n");
+	fprintf( stdout, "\t--out             [output prefix]     : Prefix for the output file names (required).\n");
+	fprintf( stdout, "\t--ref             [reference genome]  : Reference genome in FASTA format (required).\n");
+	fprintf( stdout, "\t--sonic           [sonic file]        : SONIC file that contains assembly annotations (required).\n");
+	fprintf( stdout, "\t--dels            [BED file]          : Known deletion SVs in BED format\n");
+	fprintf( stdout, "\t--dups            [BED file]          : Known duplication SVs in BED format\n");
+	fprintf( stdout, "\t--first-chr 	  [chromosome index]  : The index of the first chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--last-chr        [chromosome index]  : The index of the last chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--mapability      [BED file]          : Mappability file in BED format\n");
+	fprintf( stdout, "\t--min-read-length [integer]           : Minimum length of a read to be processed for RP (default: 60 bps)\n");
+	fprintf( stdout, "\t--min-sv-size 	  [integer]           : Minimum length of a CNV (default: 1000 bps)\n");
+	fprintf( stdout, "\t--no-sr                               : Split read mapping is disabled\n");
 
 	fprintf( stdout, "\n\n\tInformation:\n");
-	fprintf( stdout, "\t--version                  		: Print version and exit.\n");
-	fprintf( stdout, "\t--help                     		: Print this help screen and exit.\n\n");
+	fprintf( stdout, "\t--version                             : Print version and exit.\n");
+	fprintf( stdout, "\t--help                                : Print this help screen and exit.\n\n");
+	fprintf(stderr,"\n\t* For more information, please consult https://github.com/asylvz/CONGA\n\n");
 }

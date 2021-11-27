@@ -35,9 +35,11 @@ int main( int argc, char** argv)
 	init_params( &params);
 
 	/* Parse command line arguments */	
-	return_value = parse_command_line( argc, argv, params);
+	return_value = parse_cmd_line( argc, argv, params);
 	if(return_value == EXIT_PARAM_ERROR)
 		return EXIT_FAILURE;
+	else if(return_value == EXIT_SUCCESS)
+		return EXIT_SUCCESS;
 
 	print_params( params);
 

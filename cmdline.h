@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-int parse_command_line( int, char**, parameters*);
+int parse_cmd_line( int, char**, parameters*);
 void parse_bam_list( parameters** params);
 void print_help( void);
 
