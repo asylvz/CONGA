@@ -1,5 +1,5 @@
 # CONGA 
-(**CO**py **N**umber variation **G**enotyping in **A**ncient genomes) 
+(**CO**py **N**umber variation **G**enotyping in **A**ncient genomes and low-coverage sequencing data) 
 
 CONGA is a genotyping algorithm for Copy Number Variations (large deletions and duplications) in ancient genomes. It is tailored for calling homozygous and heterozygous CNV genotypes at low depths of coverage using read-depth and read-pair information from a BAM file with Illumina short single-end reads.
 
@@ -8,7 +8,6 @@ Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an
 
 ## Requirements
 
- * zlib   	(http://www.zlib.net)
  * htslib	(included as submodule; http://htslib.org/)
  * sonic  	(included as submodule; https://github.com/calkan/sonic)
 
