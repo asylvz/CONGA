@@ -58,8 +58,8 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--out   		[output prefix]    : Prefix for the output file names. (required)
 	--ref   		[reference genome] : Reference genome in FASTA format. (required)
 	--sonic 		[sonic file]       : SONIC file that contains assembly annotations. (required)
-	--dels          	[bed file]         : Known deletion SVs in bed format\n");
-	--dups          	[bed file]         : Known duplication SVs in bed format\n");
+	--dels          	[bed file]         : Known deletion SVs in bed format
+	--dups          	[bed file]         : Known duplication SVs in bed format
 	--mappability   	[bed file]         : Mappability file in BED format
 	--first-chr     	[chromosome index] : The index of the first chromosome for genotyping in your BAM.
 	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
@@ -74,4 +74,4 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 
 ## Citation
 
-Currently under review...
+*Arda Soylev, Sevim Seda Cokoglu, Dilek Koptekin, Can Alkan, and Mehmet Somel. "CONGA: Copy number variation genotyping in ancient genomes and low-coverage sequencing data." bioRxiv (2021).*
