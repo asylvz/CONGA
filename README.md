@@ -34,7 +34,7 @@ You need to input a SONIC file as input to CONGA (--sonic). This file contains s
 If you are working with a different reference genome, you need to create the SONIC file yourself. This is a straightforward process; please refer to the SONIC development repository: https://github.com/calkan/sonic/
 
 
-## Example Genotype file (required)
+## Sample Genotype file (required)
 
 	1	668630		850204
 	1	963826		974172
@@ -47,9 +47,18 @@ If you are working with a different reference genome, you need to create the SON
 * This file should be seperate for duplications and deletions if both are to be genotyped.
 
 
-## Mappability File (optional)
+## Sample Mappability File (optional)
 
-Using a mappability file (--mappability) increases the accuracy of CONGA's predictions. We used the 100-mer mappability file from http://hgdownload.cse.ucsc.edu/goldenpath/hg19/encodeDCC/wgEncodeMapability/ and converted the bigWig file into a a BED file using "bigWigToBedGraph".
+	1	63913643	63913648	0.2
+	1	63913648	63913649	0.25
+	1	63913649	63913653	0.5
+	1	63913653	63913659	0.333333
+	...
+
+Using a mappability file (--mappability) increases the accuracy of CONGA's predictions. We used the 100-mer mappability file from http://hgdownload.cse.ucsc.edu/goldenpath/hg19/encodeDCC/wgEncodeMapability/ and converted the bigWig file into a BED file using "bigWigToBedGraph".
+
+* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Postion of a CNV" (TAB) "Mappability value"
+    * Note that the mappability value should be between [0,1], where lower values indicate lower mappability intervals, i.e., repeat-rich regions, etc. 
 
 
 ## All parameters
