@@ -165,8 +165,8 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 			(*vars_del)[cnt].end = end_sv;
 			(*vars_del)[cnt].SV_type = DELETION;
 			(*vars_del)[cnt].rp = 0;
-			(*vars_del)[cnt].k_mer = 0;
-			(*vars_del)[cnt].expected_kmer = 0.0;
+			(*vars_del)[cnt].observed_rd_sv = 0;
+			(*vars_del)[cnt].expected_rd_sv = 0.0;
 			(*vars_del)[cnt].border_rp = 0;
 			(*vars_del)[cnt].low_mappability = false;
 
@@ -225,7 +225,8 @@ int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr
 			(*vars_dup)[cnt].end = end_sv;
 			(*vars_dup)[cnt].SV_type = DUPLICATION;
 			(*vars_dup)[cnt].rp = 0;
-			(*vars_dup)[cnt].k_mer = 0;
+			(*vars_dup)[cnt].observed_rd_sv = 0;
+			(*vars_dup)[cnt].expected_rd_sv = 0.0;
 			(*vars_dup)[cnt].border_rp = 0;
 			(*vars_dup)[cnt].low_mappability = false;
 

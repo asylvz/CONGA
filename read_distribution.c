@@ -13,8 +13,8 @@ void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 {
 	// For all the reads in the chromosome
 	in_bam->total_read_count_unfiltered = 0;
-	in_bam->rd_unfiltered = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
-	memset (in_bam->rd_unfiltered, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+	in_bam->read_depth = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->read_depth, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
 }
 
 void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
@@ -32,7 +32,7 @@ void calc_mu_per_chr( bam_info* in_bam, int chromosome_length)
 
 	for( i = 0; i < chromosome_length; i++)
 	{
-		rd_cnt += (long) in_bam->rd_unfiltered[i];
+		rd_cnt += (long) in_bam->read_depth[i];
 		window_total++;
 	}
 	/* Calculate mu values */
@@ -68,17 +68,17 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 			end = params->this_sonic->chromosome_lengths[chr_index];
 
 		gc_val = (int) round ( sonic_get_gc_content( params->this_sonic, params->this_sonic->chromosome_names[chr_index], i, end));
-		rd_per_gc_unfiltered[gc_val] += ( long) in_bam->rd_unfiltered[i];
+		rd_per_gc_unfiltered[gc_val] += ( long) in_bam->read_depth[i];
 		window_per_gc[gc_val]++;
 	}
 
-	in_bam->expected_rd_unfiltered[0] = 0.0;
+	in_bam->expected_read_depth[0] = 0.0;
 	for( i = 1; i < 101; i++)
 	{
-		in_bam->expected_rd_unfiltered[i] = ( float)rd_per_gc_unfiltered[i] / ( window_per_gc[i]);
+		in_bam->expected_read_depth[i] = ( float)rd_per_gc_unfiltered[i] / ( window_per_gc[i]);
 
-		if( isnanf( in_bam->expected_rd_unfiltered[i]) || isinff( ( in_bam->expected_rd_unfiltered[i])) == -1
-				|| isinff( ( in_bam->expected_rd_unfiltered[i])) == 1 )
-			in_bam->expected_rd_unfiltered[i] = 0;
+		if( isnanf( in_bam->expected_read_depth[i]) || isinff( ( in_bam->expected_read_depth[i])) == -1
+				|| isinff( ( in_bam->expected_read_depth[i])) == 1 )
+			in_bam->expected_read_depth[i] = 0;
 	}
 }

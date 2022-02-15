@@ -91,16 +91,11 @@ typedef struct _params
 
 typedef struct _bam_info
 {
-	//int total_read_count_filtered; /* total number of reads  */
 	int total_read_count_unfiltered; /* total number of reads that are > some mapping quality */
-	//short* rd_filtered; /* read depth */
-	short* rd_unfiltered; /* read depth low qual */
+	short* read_depth; /* read depth low qual */
 	float* mappability; /* mappability value for each base */
 	float mean;
-	//float expected_rd_filtered[101]; /* GC percentages, i.e., GC[13]=323 means 323 windows have GC of 13% */
-	float expected_rd_unfiltered[101];
-	float expected_kmer[101];
-	short* kmer;
+	float expected_read_depth[101];
 
 	htsFile* bam_file; /* file pointer to the BAM file */
 	hts_idx_t* bam_file_index;

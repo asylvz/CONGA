@@ -211,7 +211,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 			}
 		}
 
-		in_bam->rd_unfiltered[bam_alignment_core.pos]++;
+		in_bam->read_depth[bam_alignment_core.pos]++;
 		in_bam->total_read_count_unfiltered++;
 		cnt_reads++;
 
