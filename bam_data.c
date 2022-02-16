@@ -239,14 +239,14 @@ void read_bam( bam_info* in_bam, parameters *params)
 		sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
 		fprintf( stderr, "Output Del file: %s\n", svfile_del);
 		fpDel = safe_fopen( svfile_del,"w");
-		fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\tOBSERVED_READS\tEXPECTED_READS\tNOSV_LIKELIHOOD\tHETEROZYGOUS_LIKELIHOOD\tHOMOZYGOUS_LIKELIHOOD\n");
+		fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\tOBSERVED_READS\tEXPECTED_READS\n");
 	}
 	if(params->dup_file)
 	{
 		sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
 		fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 		fpDup = safe_fopen( svfile_dup,"w");
-		fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITYOBSERVED_READS\tEXPECTED_READS\tNOSV_LIKELIHOOD\tHETEROZYGOUS_LIKELIHOOD\tHOMOZYGOUS_LIKELIHOOD\n");
+		fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\tOBSERVED_READS\tEXPECTED_READS\n");
 	}
 
 	/* HTS implementation */
