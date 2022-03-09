@@ -13,7 +13,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
-	static int load_sonic = 0, no_sr = 0, no_kmer = 0;
+	static int load_sonic = 0, no_sr = 1, no_kmer = 0;
 	static int do_remap = 0;
 	char *min_rd_support = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
@@ -22,7 +22,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			{"rd", required_argument, 0, 'a'},
 			{"min-read-length"    , required_argument,	 0, 'b'},
 			{"dels"    , required_argument,   0, 'd'},
-			{"mq", required_argument, 0, 'e'},
+			{"min-mapq", required_argument, 0, 'e'},
 			{"ref"    , required_argument,   0, 'f'},
 			{"fastq"    , required_argument,   0, 'g'},
 			{"help"   , no_argument,         0, 'h'},
@@ -136,8 +136,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		}
 	}
 
-	params->no_sr = no_sr;
-	params->no_kmer = no_kmer;
 
 	/* check if outprefix is given */
 	if( params->outprefix == NULL)
@@ -182,15 +180,19 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	}
 
 	if( min_rp_support == NULL)
-		params->rp_support = 20;
+	{
+		params->rp_support = 10;
+		params->no_sr = 1;
+	}
 	else
 	{
 		params->rp_support = atoi(min_rp_support);
+		params->no_sr = 0;
 		free( min_rd_support);
 	}
 
 	if( min_mapping_qual == NULL)
-		params->mq_threshold = 5;
+		params->mq_threshold = -1;
 	else
 	{
 		params->mq_threshold = atoi(min_mapping_qual);
@@ -203,6 +205,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	if ( params->sonic_info == NULL)
 		set_str( &(params->sonic_info), params->ref_genome);
 
+	//params->no_sr = no_sr;
 	get_working_directory(params);
 	fprintf(stderr, "[CONGA INFO] Working directory: %s\n", params->outdir);
 
@@ -226,6 +229,7 @@ void print_help( void)
 	fprintf( stdout, "\t--mapability      [BED file]          : Mappability file in BED format\n");
 	fprintf( stdout, "\t--min-read-length [integer]           : Minimum length of a read to be processed for RP (default: 60 bps)\n");
 	fprintf( stdout, "\t--min-sv-size 	  [integer]           : Minimum length of a CNV (default: 1000 bps)\n");
+	fprintf( stdout, "\t--min-mapq [integer]                  : Minimum mapping quality filter for reads to be included in read-depth analysis (default: no-filter)\n");
 	fprintf( stdout, "\t--no-sr                               : Split read mapping is disabled\n");
 
 	fprintf( stdout, "\n\n\tInformation:\n");
