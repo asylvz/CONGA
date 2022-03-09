@@ -74,7 +74,9 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
 	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps)
 	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps)
-	--no-sr					   : Split read mapping is disabled
+	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: -1)
+	--rp			[integer]	   : Enables split-read mapping and determines minimum read-pair support needed for a duplication. 
+						     Suggested for higher coverage BAM files e.g., >5x
 	
 	Information:
 	--version                  		   : Print version and exit.
