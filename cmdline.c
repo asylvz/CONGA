@@ -169,7 +169,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		params->c_score = 0.5;
 	else
 	{
-		params->c_score = atoi(min_rd_support);
+		params->c_score = atof(min_rd_support);
 		free( min_rd_support);
 	}
 

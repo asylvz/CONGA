@@ -72,7 +72,7 @@ typedef struct _params
 	int min_read_length;
 	int first_chrom; /*the first chromosome as indexed in the ref to be computer for. 0 by default*/
 	int last_chrom; /*the last chromosome as indexed in the ref to be computer for. ref->chrom_count by default*/
-	int c_score; /* Likelihood score threshold */
+	float c_score; /* Likelihood score threshold */
 	int mq_threshold; /* Minimum mapping quality */
 	int rp_support; /* Minimum number of read-pairs needed to support duplications */
 	char *ref_seq; /* reference sequence per chromosome */
