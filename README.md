@@ -75,8 +75,8 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps)
 	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps)
 	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: -1)
-	--rp			[integer]	   : Enables split-read mapping and determines minimum read-pair support needed for a duplication. 
-						     Suggested for higher coverage BAM files e.g., >5x
+	--c-score               [float]            : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).
+	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).
 	
 	Information:
 	--version                  		   : Print version and exit.
