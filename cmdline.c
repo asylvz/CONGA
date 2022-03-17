@@ -13,18 +13,17 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
-	static int load_sonic = 0, no_sr = 1, no_kmer = 0;
+	static int load_sonic = 0, no_sr = 1;
 	static int do_remap = 0;
 	char *min_rd_support = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
 	static struct option long_options[] = 
 	{
-			{"rd", required_argument, 0, 'a'},
+			{"c-score", required_argument, 0, 'a'},
 			{"min-read-length"    , required_argument,	 0, 'b'},
 			{"dels"    , required_argument,   0, 'd'},
 			{"min-mapq", required_argument, 0, 'e'},
 			{"ref"    , required_argument,   0, 'f'},
-			{"fastq"    , required_argument,   0, 'g'},
 			{"help"   , no_argument,         0, 'h'},
 			{"input"  , required_argument,   0, 'i'},
 			{"rp", required_argument, 0, 'j'},
@@ -37,9 +36,8 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			{"version", no_argument,         0, 'v'},
 			{"exclude", required_argument, 0,'x'},
 			{"no-sr", no_argument, &no_sr, 1},
-			{"no-kmer", no_argument, &no_kmer, 1},
-			{"first-chrom", required_argument, 0, FIRST_CHROM},
-			{"last-chrom", required_argument, 0, LAST_CHROM},
+			{"first-chr", required_argument, 0, FIRST_CHROM},
+			{"last-chr", required_argument, 0, LAST_CHROM},
 			{0        , 0,                   0,  0 }
 	};
 
@@ -71,10 +69,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 
 		case 'f':
 			set_str( &( params->ref_genome), optarg);
-			break;
-
-		case 'g':
-			set_str( &( params->fastq), optarg);
 			break;
 
 		case 'h':
@@ -172,10 +166,10 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	}
 
 	if( min_rd_support == NULL)
-		params->rd_threshold = 1000;
+		params->c_score = 0.5;
 	else
 	{
-		params->rd_threshold = atoi(min_rd_support);
+		params->c_score = atoi(min_rd_support);
 		free( min_rd_support);
 	}
 
@@ -218,22 +212,23 @@ void print_help( void)
 	fprintf( stdout, "\n\t... CONGA (COpy Number variation Genotyping in Ancient genomes) ...\n\n");
 	fprintf( stdout, "\tVersion %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 	fprintf( stdout, "\tParameters:\n");
-	fprintf( stdout, "\t--input           [BAM file ]         : Input file in sorted and indexed BAM format (required).\n");
-	fprintf( stdout, "\t--out             [output prefix]     : Prefix for the output file names (required).\n");
-	fprintf( stdout, "\t--ref             [reference genome]  : Reference genome in FASTA format (required).\n");
-	fprintf( stdout, "\t--sonic           [sonic file]        : SONIC file that contains assembly annotations (required).\n");
-	fprintf( stdout, "\t--dels            [BED file]          : Known deletion SVs in BED format\n");
-	fprintf( stdout, "\t--dups            [BED file]          : Known duplication SVs in BED format\n");
-	fprintf( stdout, "\t--first-chr 	  [chromosome index]  : The index of the first chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--last-chr        [chromosome index]  : The index of the last chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--mapability      [BED file]          : Mappability file in BED format\n");
-	fprintf( stdout, "\t--min-read-length [integer]           : Minimum length of a read to be processed for RP (default: 60 bps)\n");
-	fprintf( stdout, "\t--min-sv-size 	  [integer]           : Minimum length of a CNV (default: 1000 bps)\n");
-	fprintf( stdout, "\t--min-mapq [integer]                  : Minimum mapping quality filter for reads to be included in read-depth analysis (default: no-filter)\n");
-	fprintf( stdout, "\t--no-sr                               : Split read mapping is disabled\n");
+	fprintf( stdout, "\t--input [BAM file]        : Input file in sorted and indexed BAM format (required).\n");
+	fprintf( stdout, "\t--out [output prefix]     : Prefix for the output file names (required).\n");
+	fprintf( stdout, "\t--ref [reference genome]  : Reference genome in FASTA format (required).\n");
+	fprintf( stdout, "\t--sonic [sonic file]      : SONIC file that contains assembly annotations (required).\n");
+	fprintf( stdout, "\t--dels [BED file]         : Known deletion SVs in BED format\n");
+	fprintf( stdout, "\t--dups [BED file]         : Known duplication SVs in BED format\n");
+	fprintf( stdout, "\t--first-chr [chr index]   : The index of the first chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--last-chr [chr index]    : The index of the last chromosome for genotyping in your BAM\n");
+	fprintf( stdout, "\t--mapability [BED file]   : Mappability file in BED format\n");
+	fprintf( stdout, "\t--min-read-length [INT]   : Minimum length of a read to be processed for RP (default: 60 bps)\n");
+	fprintf( stdout, "\t--min-sv-size [INT]       : Minimum length of a CNV (default: 1000 bps)\n");
+	fprintf( stdout, "\t--min-mapq [INT]          : Minimum mapping quality filter for reads (default: no-filter)\n");
+	fprintf( stdout, "\t--c-score [FLOAT]         : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).\n");
+	fprintf( stdout, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).");
 
 	fprintf( stdout, "\n\n\tInformation:\n");
-	fprintf( stdout, "\t--version                             : Print version and exit.\n");
-	fprintf( stdout, "\t--help                                : Print this help screen and exit.\n\n");
+	fprintf( stdout, "\t--version                 : Print version and exit.\n");
+	fprintf( stdout, "\t--help                    : Print this help screen and exit.\n\n");
 	fprintf(stderr,"\n\t* For more information, please consult https://github.com/asylvz/CONGA\n\n");
 }

@@ -46,9 +46,8 @@ int main( int argc, char** argv)
 	/* Load SONIC */
 	params->this_sonic = sonic_load(params->sonic_file);
 
-	if (params->last_chrom < params->first_chrom){
+	if (params->last_chrom < params->first_chrom)
 		params->last_chrom = params->this_sonic->number_of_chromosomes - 1;
-	}
 
 	/* Read BAM files */
 	in_bam = ( bam_info*) getMem( sizeof( bam_info));

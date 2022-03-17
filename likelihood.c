@@ -100,7 +100,7 @@ double lpoisson(int observed, double lambda)
 	penalty = 0.01;
 	if  (lambda == 0.0)
 		lambda = penalty;
-	//fprintf(stderr,"%d - %f - %f - %f - %f - %f\n", observed, log(lambda), observed * log(lambda), lambda, lgamma(observed + 1), observed * log(lambda) - lambda - lgamma(observed + 1));
+
 	return observed * log(lambda) - lambda - lgamma(observed + 1);
 }
 
@@ -148,9 +148,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 		else
 			arr[count].copy_number = 1;
 
-
 		//fprintf(stderr,"%s\t%d\t%d\t%.2lf\t%.2f\t%f\t%f\t%f\t%ld\t%.2f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, all_svs_del[count].del_likelihood, all_svs_del[count].copy_number,lhomo, lhete,lnone, arr[count].depth, expectedReadCount);
-
 	}
 	else if(type == DUPLICATION)
 	{
@@ -185,7 +183,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			{
 				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
 
-				if(all_svs_del[count].likelihood_score < 0.5 && all_svs_del[count].mappability > 0.5)
+				if(all_svs_del[count].likelihood_score < params->c_score && all_svs_del[count].mappability > 0.5)
 				{
 					fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%s\t%.2f\t%d\t%.2lf\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability);
 					sv_cnt_del++;
@@ -195,7 +193,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			{
 				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
 
-				if(all_svs_del[count].likelihood_score < 0.5)
+				if(all_svs_del[count].likelihood_score < params->c_score)
 				{
 					fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%s\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp);
 					sv_cnt_del++;
@@ -217,8 +215,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			{
 				if(!params->no_sr)
 				{
-					if(((all_svs_dup[count].likelihood_score < 10 && all_svs_dup[count].rp > 10) ||
-							(all_svs_dup[count].likelihood_score < 0.5))
+					if(((all_svs_dup[count].rp > params->rp_support) || (all_svs_dup[count].likelihood_score < params->c_score))
 							&& all_svs_dup[count].mappability > 0.5)
 					{
 						fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%s\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_score, all_svs_dup[count].rp, all_svs_dup[count].mappability);
@@ -227,7 +224,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 				}
 				else
 				{
-					if(all_svs_dup[count].likelihood_score < 0.5 && all_svs_dup[count].mappability > 0.5)
+					if(all_svs_dup[count].likelihood_score < params->c_score && all_svs_dup[count].mappability > 0.5)
 					{
 						fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%s\t%.2lf\t%d\t%.2lf\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_score, all_svs_dup[count].rp, all_svs_dup[count].mappability);
 						sv_cnt_dup++;
@@ -238,8 +235,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			{
 				if(!params->no_sr)
 				{
-					if((all_svs_dup[count].likelihood_score < 10 && all_svs_dup[count].rp > 10) ||
-							(all_svs_dup[count].likelihood_score < 0.5))
+					if((all_svs_dup[count].rp > params->rp_support) || (all_svs_dup[count].likelihood_score < params->c_score))
 					{
 						fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%s\t%.2lf\t%d\tN/A\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_score, all_svs_dup[count].rp);
 						sv_cnt_dup++;
@@ -247,7 +243,7 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 				}
 				else
 				{
-					if(all_svs_dup[count].likelihood_score < 0.5)
+					if(all_svs_dup[count].likelihood_score < params->c_score)
 					{
 						fprintf(fpSVs,"%s\t%d\t%d\tDUP\t%s\t%.2lf\t%d\tN/A\n", all_svs_dup[count].chr_name, all_svs_dup[count].start, all_svs_dup[count].end, (all_svs_dup[count].copy_number == 2) ? "1/1":"0/1", all_svs_dup[count].likelihood_score, all_svs_dup[count].rp);
 						sv_cnt_dup++;

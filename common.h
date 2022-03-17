@@ -62,7 +62,6 @@ typedef struct SplitsInfo
 typedef struct _params
 {
 	char* ref_genome; /* path to reference genome - fasta */
-	char* fastq;
 	char* outdir;
 	char *low_map_regions; /*Regions with low mappability is excluded from consideration - a BED input is required */
 	char *dup_file;
@@ -73,18 +72,15 @@ typedef struct _params
 	int min_read_length;
 	int first_chrom; /*the first chromosome as indexed in the ref to be computer for. 0 by default*/
 	int last_chrom; /*the last chromosome as indexed in the ref to be computer for. ref->chrom_count by default*/
-	int rd_threshold; /* Threshold is used in RD filtering, calWeight() in vh_setcover.c */
+	int c_score; /* Likelihood score threshold */
 	int mq_threshold; /* Minimum mapping quality */
-	int rp_support; /* Minimum number of read-pairs to designate a variant as PRECISE */
+	int rp_support; /* Minimum number of read-pairs needed to support duplications */
 	char *ref_seq; /* reference sequence per chromosome */
-	char *kmer_seq; /* reference sequence per chromosome */
 	int hash_size; /* size of the hash table for split read mapping */
-	long int hash_size_kmer; /* size of the hash table for split read mapping */
 	char *sonic_file; /* SONIC file name */
 	char *mappability_file; /* a file that contains mappability information for various intervals */
 	int load_sonic; /*load SONIC file*/
 	int no_sr; /* Don't use split-read */
-	int no_kmer; /* Don't use k-mers */
 	char *sonic_info; /* SONIC reference information string for building */
 	sonic *this_sonic; /* SONIC */
 } parameters;
@@ -145,7 +141,6 @@ int find_chr_index_bam( char* chromosome_name, bam_hdr_t* bam_header);
 int max( int x, int y);
 int min( int x, int y);
 int hammingDistance( char *str1, char *str2, int len);
-int vh_cmprReadNameStr (const void *a, const void *b);
 void get_working_directory(parameters *params);
 int is_dna_letter( char base);
 int is_proper( int flag);

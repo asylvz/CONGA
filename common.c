@@ -299,10 +299,6 @@ int find_chr_index_bam( char* chromosome_name, bam_hdr_t* bam_header)
 	return -1;
 }
 
-int vh_cmprReadNameStr (const void *a, const void *b)
-{
-	return strcmp (*(char **) a, *(char **) b);
-}
 
 /* check if ACGT */
 int is_dna_letter( char base)
