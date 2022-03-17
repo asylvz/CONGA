@@ -15,7 +15,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	int o;
 	static int load_sonic = 0, no_sr = 1;
 	static int do_remap = 0;
-	char *min_rd_support = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
+	char *c_score = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
 	static struct option long_options[] = 
 	{
@@ -52,7 +52,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		switch( o)
 		{
 		case 'a':
-			set_str( &( min_rd_support), optarg);
+			set_str( &( c_score), optarg);
 			break;
 
 		case 'b':
@@ -165,12 +165,12 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		fprintf( stderr, "Minimum size of a read is set to %d\n", params->min_read_length);
 	}
 
-	if( min_rd_support == NULL)
+	if( c_score == NULL)
 		params->c_score = 0.5;
 	else
 	{
-		params->c_score = atof(min_rd_support);
-		free( min_rd_support);
+		params->c_score = atof(c_score);
+		free( c_score);
 	}
 
 	if( min_rp_support == NULL)
@@ -182,7 +182,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	{
 		params->rp_support = atoi(min_rp_support);
 		params->no_sr = 0;
-		free( min_rd_support);
+		free( min_rp_support);
 	}
 
 	if( min_mapping_qual == NULL)
