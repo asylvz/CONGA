@@ -1,5 +1,5 @@
-CONGA_VERSION := "0.4"
-CONGA_UPDATE := "November 27, 2021"
+CONGA_VERSION := "0.1"
+CONGA_UPDATE := "March 26, 2022"
 BUILD_DATE := "$(shell date)"
 CC=gcc
 CFLAGS =  -O3 -g -I htslib -I sonic -DCONGA_VERSION=\"$(CONGA_VERSION)\" -DBUILD_DATE=\"$(BUILD_DATE)\" -DCONGA_UPDATE=\"$(CONGA_UPDATE)\"
