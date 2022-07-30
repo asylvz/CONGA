@@ -181,7 +181,19 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 		{
 			if(params->mappability_file != NULL)
 			{
-				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				if(all_svs_del[count].likelihood_score < params->c_score)
+				{	
+					fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				}
+				else if(all_svs_del[count].likelihood_score <= (1 / params->c_score))
+	            {
+					fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, "N/A", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				}
+				else
+				{
+					fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\t%.2lf\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, "0/0", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].mappability, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				}
+
 
 				if(all_svs_del[count].likelihood_score < params->c_score && all_svs_del[count].mappability > 0.5)
 				{
@@ -191,8 +203,23 @@ void output_SVs( parameters *params, FILE* fpSVs, FILE* fp_del, FILE* fp_dup)
 			}
 			else
 			{
-				fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
 
+				if(all_svs_del[count].likelihood_score < params->c_score)	
+				{
+						fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				}
+				
+				else if(all_svs_del[count].likelihood_score <= (1 / params->c_score))
+				{
+						fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, "N/A", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+				}
+				else
+				{
+						fprintf(fp_del,"%s\t%d\t%d\t%s\t%.2f\t%d\tN/A\t%d\t%.1f\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, "0/0", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp, all_svs_del[count].observed_rd_sv, all_svs_del[count].expected_rd_sv);
+
+				}
+
+			
 				if(all_svs_del[count].likelihood_score < params->c_score)
 				{
 					fprintf(fpSVs,"%s\t%d\t%d\tDEL\t%s\t%.2f\t%d\n", all_svs_del[count].chr_name, all_svs_del[count].start, all_svs_del[count].end, (all_svs_del[count].copy_number == 2) ? "1/1":"0/1", all_svs_del[count].likelihood_score, all_svs_del[count].border_rp);
