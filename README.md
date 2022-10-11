@@ -9,6 +9,7 @@ Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an
 ## Requirements
 
  * htslib	(included as submodule; http://htslib.org/)
+ 	* libbz2 and liblzma are required by htslib (e.g., "sudo apt-get install libbz2-dev" and "sudo apt-get install liblzma-dev")
  * sonic  	(included as submodule; https://github.com/calkan/sonic)
 
 CONGA is developed and tested using Linux operating system... 
@@ -16,7 +17,7 @@ CONGA is developed and tested using Linux operating system...
 ## Downloading and running
 
 	git clone https://github.com/asylvz/CONGA --recursive
-	make libs
+	cd CONGA && make libs
 	make
 
 	conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
