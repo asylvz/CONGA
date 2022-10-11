@@ -20,7 +20,7 @@ CONGA is developed and tested using Linux operating system...
 	cd CONGA && make libs
 	make
 
-	conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
+	./conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 
