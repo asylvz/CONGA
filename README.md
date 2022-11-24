@@ -18,8 +18,7 @@ CONGA is developed and tested using Linux Ubuntu operating system
 ## Downloading, compiling and running
 
 	git clone https://github.com/asylvz/CONGA --recursive
-	cd CONGA && make libs
-	make
+	cd CONGA && make libs && make
 
 	./conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
@@ -35,22 +34,18 @@ If you do not have root access to install liblzma and/or libbz2, you can compile
 
 ## Docker Usage
 
-You can also use Docker to run CONGA
+Another alternative to run CONGA is using [Docker](https://www.docker.com)
 
 	cd docker
 	docker build . -t conga:latest
 
-Your image named "asylvz/conga" should be ready. You can run conga using this image by
+Your image named "conga" should be ready. You can run CONGA using this image by
 
-	docker run --user=$UID -v /path/to/inputs:/input -v /path/to/outputdir:/output asylvz/conga [args]
+	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga -i /input/myinput.bam --sonic /input/human_g1k_v37.sonic --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 Alternatively, you can pull from Docker Hub:
 
 	docker pull asylvz/conga
-
-Sample run:
-	
-	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output asylvz/conga -i /input/myinput.bam --sonic /input/human_g1k_v37.sonic --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 
 ## SONIC file (required)
