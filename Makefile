@@ -1,4 +1,4 @@
-CONGA_VERSION := "0.1"
+CONGA_VERSION := "1.0"
 CONGA_UPDATE := "November 24, 2022"
 BUILD_DATE := "$(shell date)"
 CC=gcc
