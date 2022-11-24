@@ -7,12 +7,13 @@ Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an
 
 
 ## Requirements
+CONGA is developed and tested using Linux Ubuntu operating system
 
  * htslib	(included as submodule; http://htslib.org/)
- 	* libbz2 and liblzma are required by htslib (e.g., "sudo apt-get install libbz2-dev" and "sudo apt-get install liblzma-dev")
+ 	* libbz2, liblzma, libcurl are required by htslib
  * sonic  	(included as submodule; https://github.com/calkan/sonic)
-
-CONGA is developed and tested using Linux operating system... 
+ 
+*In order to install all the dependencies:* ***"sudo apt-get install git make gcc zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"*** 
 
 ## Downloading and running
 
