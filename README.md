@@ -13,9 +13,9 @@ CONGA is developed and tested using Linux Ubuntu operating system
  	* libbz2, liblzma, libcurl are required by htslib
  * sonic  	(included as submodule; https://github.com/calkan/sonic)
  
-*In order to install all the dependencies:* ***"sudo apt-get install git make gcc zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"*** 
+*Installing development libraries (requires sudo access):* ***"sudo apt-get install zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"***
 
-## Downloading and running
+## Downloading, compiling and running
 
 	git clone https://github.com/asylvz/CONGA --recursive
 	cd CONGA && make libs
@@ -23,6 +23,34 @@ CONGA is developed and tested using Linux Ubuntu operating system
 
 	./conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
+
+## Compiling and running without sudo access
+
+If you do not have root access to install liblzma and/or libbz2, you can compile htslib without CRAM support. However, the libz library is still required, please talk to your admin if it is not available on your system.
+	
+	make nocram
+
+	./conga-nocram -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
+		--dels known_dels.bed --dups known_dups.bed --out myoutput
+
+## Docker Usage
+
+You can also use Docker to run CONGA
+
+	cd docker
+	docker build . -t conga:latest
+
+Your image named "asylvz/conga" should be ready. You can run conga using this image by
+
+	docker run --user=$UID -v /path/to/inputs:/input -v /path/to/outputdir:/output asylvz/conga [args]
+
+Alternatively, you can pull from Docker Hub:
+
+	docker pull asylvz/conga
+
+Sample run:
+	
+	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output asylvz/conga -i /input/myinput.bam --sonic /input/human_g1k_v37.sonic --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 
 ## SONIC file (required)
