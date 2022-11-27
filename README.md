@@ -22,6 +22,8 @@ CONGA is developed and tested using Linux Ubuntu operating system
 
 	./conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
+		
+* If you use a X86_64 Linux machine, you can directly use our binary file (under "Relases") after ***"sudo chmod 755 conga_v1.0_X86_64"***
 
 ## Compiling and running without sudo access
 
