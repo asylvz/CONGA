@@ -112,4 +112,4 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 
 ## Citation
 
-*Arda Soylev, Sevim Seda Cokoglu, Dilek Koptekin, Can Alkan, and Mehmet Somel. "CONGA: Copy number variation genotyping in ancient genomes and low-coverage sequencing data." bioRxiv (2021).*
+*Arda Söylev, Sevim Seda Çokoglu, Dilek Koptekin, Can Alkan, and Mehmet Somel. "CONGA: Copy number variation genotyping in ancient genomes and low-coverage sequencing data." PLOS Computational Biology 18, no. 12 (2022): e1010788.* https://doi.org/10.1371/journal.pcbi.1010788
