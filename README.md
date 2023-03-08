@@ -62,6 +62,7 @@ If you are working with a different reference genome, you need to create the SON
 
 
 ## Sample Genotype file (required)
+### You can use the "svcalls.sh" script under /scripts to generate CNV calls from the 1K Phase 3 SV call set
 
 	1	668630		850204
 	1	963826		974172
@@ -72,7 +73,6 @@ If you are working with a different reference genome, you need to create the SON
 
 * The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Postion of a CNV"
 * This file should be seperate for duplications and deletions if both are to be genotyped.
-
 
 ## Sample Mappability File (optional)
 
