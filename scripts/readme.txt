@@ -4,7 +4,7 @@ This script can be used to generate CNV call set using 1000 Genomes Phase 3 SVs 
 - If you want to generate deletions of size >1000 bps, use:
 ./svcalls 1000 or ./svcalls 1000 del 
 
-- For duplications of size 1000, use:
+- For duplications of size >1000, use:
 ./svcalls 1000 dup
 
 * 1000 can be replaced with any value.
