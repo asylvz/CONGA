@@ -124,6 +124,8 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 				orient[posMapSize] = FORWARD;
 				hammingDisMap[posMapSize] = dist;
 				posMapSize = posMapSize + 1;
+				if( posMapSize >= 10000)
+					break;
 			}
 		}
 	}
@@ -173,6 +175,8 @@ posMapSplitRead *almostPerfect_match_seq_ref( parameters *params, int chr_index,
 					hammingDisMap[posMapSize] = dist;
 					posMapSize = posMapSize + 1;
 					reverseMatch = 1;
+					if( posMapSize >= 10000)
+						break;
 				}
 			}
 			if( posMapSize > MAX_MAPPING)
@@ -208,7 +212,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 	uint8_t *tmp;
 	int return_type, i;
 	float avgPhredQual = 0;
-	char str[512], str2[512];
+	char *str, *str2;
 	uint8_t *a_qual, * a_qual2;
 
 	bam1_core_t bam_alignment_core = bam_alignment->core;
@@ -251,7 +255,8 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		}
 
 
-		//str = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
+		str = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
+		str2 = (char *) getMem( ( bam_alignment_core.l_qseq / 2 + 1) * sizeof( char));
 		newEl->ptrSplitMap = NULL;
 
 		int k = 0;
@@ -271,11 +276,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		}
 		str[k] = '\0';
 
-		if(str != NULL)
-		{
-			newEl->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str, newEl->pos);
-			//free(str);
-		}
+		newEl->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str, newEl->pos);
 
 		newEl->next = in_bam->listSplitRead;
 		in_bam->listSplitRead = newEl;
@@ -304,6 +305,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 
 		a_qual2 = bam_get_qual( bam_alignment);
 
+		avgPhredQual = 0;
 		for( i = 0; i < bam_alignment_core.l_qseq / 2; i++)
 			avgPhredQual = avgPhredQual + a_qual2[i];
 
@@ -316,6 +318,8 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 			free(newEl2->chromosome_name);
 			free(newEl2->readName);
 			free(newEl2);
+			free(str);
+			free(str2);
 			return -1;
 		}
 
@@ -338,16 +342,15 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 		}
 		str2[k] = '\0';
 
-		if(str2 != NULL)
-		{
-			newEl2->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str2, newEl2->pos);
-			//free(str);
-		}
+		newEl2->ptrSplitMap = almostPerfect_match_seq_ref( params, chr_index, str2, newEl2->pos);
 
 		newEl2->next = in_bam->listSplitRead;
 		in_bam->listSplitRead = newEl2;
 
 		split_read_count++;
+
+		free(str);
+		free(str2);
 
 		return RETURN_SUCCESS;
 	}

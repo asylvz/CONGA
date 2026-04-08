@@ -39,6 +39,8 @@ void init_params( parameters** params)
 	( *params)->ref_seq = NULL;
 	( *params)->hash_size = 0;
 	( *params)->min_read_length = 0;
+	( *params)->no_sr = 1;
+	( *params)->ref_fai = NULL;
 }
 
 
@@ -241,7 +243,7 @@ void* getMem( size_t size)
 	if( ret == NULL)
 	{
 		fprintf( stderr, "Cannot allocate memory. Currently addressed memory = %0.2f MB, requested memory = %0.2f MB.\nCheck the available main memory.\n", getMemUsage(), ( float) ( size / 1048576.0));
-		exit( 0);
+		exit( EXIT_FAILURE);
 	}
 
 	memUsage = memUsage + size;
@@ -328,12 +330,13 @@ void get_sample_name(bam_info* in_bam, char* header_text)
 	set_str( &( tmp_header), header_text);
 	char* p = strtok( tmp_header, "\t\n");
 	char sample_name_buffer[1024];
+	sample_name_buffer[0] = '\0';
 
 	while( p != NULL)
 	{
 		/* If the current token has "SM" as the first two characters,
 			we have found our Sample Name */
-		if( p[0] == 'S' && p[1] == 'M')
+		if( p[0] == 'S' && p[1] == 'M' && strlen( p) > 3)
 		{
 			/* Get the Sample Name */
 			strncpy( sample_name_buffer, p + 3, strlen( p) - 3);
@@ -419,13 +422,20 @@ char* reverseComplement( char* str)
 	return str2;
 }
 
+/* Lazily load and cache the FASTA index */
+static faidx_t* get_ref_fai( parameters *params)
+{
+	if (params->ref_fai == NULL)
+		params->ref_fai = fai_load( params->ref_genome);
+	return params->ref_fai;
+}
+
 /* Read the reference genome */
 long readReferenceSeq( parameters *params, int chr_index)
 {
-	int i, min, max, loc_length;
+	int i, loc_length;
 	char *ref_seq;
-	long bp_cnt = 0;
-	faidx_t* ref_fai;
+	long bp_cnt;
 
 	if (params->ref_seq != NULL)
 	{
@@ -433,87 +443,49 @@ long readReferenceSeq( parameters *params, int chr_index)
 		return -1;
 	}
 
-	min = 0, max = 999;
-	ref_fai = fai_load( params->ref_genome);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], 0, params->this_sonic->chromosome_lengths[chr_index] - 1, &loc_length);
 
-	params->ref_seq = ( char *) getMem( (params->this_sonic->chromosome_lengths[chr_index] + 1) * sizeof( char));
+	params->ref_seq = ( char *) getMem( (loc_length + 1) * sizeof( char));
 
-	while ( max < params->this_sonic->chromosome_lengths[chr_index])
-	{
-		ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
+	for( i = 0; i < loc_length; i++)
+		params->ref_seq[i] = toupper( ref_seq[i]);
 
-		for( i = 0; i < loc_length; i++)
-		{
-			/* can we do this faster with memcpy? */
-			if( bp_cnt < params->this_sonic->chromosome_lengths[chr_index])
-				params->ref_seq[bp_cnt] = toupper( ref_seq[i]);
-			bp_cnt++;
-		}
-		if( bp_cnt >= params->this_sonic->chromosome_lengths[chr_index])
-			break;
+	params->ref_seq[loc_length] = '\0';
+	bp_cnt = loc_length;
 
-		min += loc_length;
-		max += loc_length;
-		free(ref_seq);
-	}
-	fai_destroy(ref_fai);
+	free(ref_seq);
 
-	params->ref_seq[bp_cnt] = '\0';
 	return bp_cnt;
 }
 
 char* get_refseq( parameters *params, char* chr_name, int start, int end)
 {
-	int i, min, max, loc_length, chr_index;
+	int loc_length, chr_index;
 	char *ref_seq;
-	long bp_cnt = 0;
-	faidx_t* ref_fai;
 
 	chr_index = sonic_refind_chromosome_index( params->this_sonic, chr_name);
-	min = start;
-	max = end;
 
-	ref_fai = fai_load( params->ref_genome);
-	ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
-
-	fai_destroy( ref_fai);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], start, end, &loc_length);
 
 	return ref_seq;
 }
 
 char* read_ref( parameters *params, int chr_index)
 {
-	int i, min, max, loc_length;
+	int i, loc_length;
 	char *ref_seq;
-	long bp_cnt = 0;
-	faidx_t* ref_fai;
 	char* seq = NULL;
 
-	min = 0, max = 999;
-	ref_fai = fai_load( params->ref_genome);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], 0, params->this_sonic->chromosome_lengths[chr_index] - 1, &loc_length);
 
-	seq = ( char *) getMem( (params->this_sonic->chromosome_lengths[chr_index] + 1) * sizeof( char));
+	seq = ( char *) getMem( (loc_length + 1) * sizeof( char));
 
-	while ( max < params->this_sonic->chromosome_lengths[chr_index])
-	{
-		ref_seq = faidx_fetch_seq( ref_fai, params->this_sonic->chromosome_names[chr_index], min, max, &loc_length);
+	for( i = 0; i < loc_length; i++)
+		seq[i] = toupper( ref_seq[i]);
 
-		for( i = 0; i < loc_length; i++)
-		{
-			/* can we do this faster with memcpy? */
-			if( bp_cnt < params->this_sonic->chromosome_lengths[chr_index])
-				seq[bp_cnt] = toupper( ref_seq[i]);
-			bp_cnt++;
-		}
-		if( bp_cnt >= params->this_sonic->chromosome_lengths[chr_index])
-			break;
+	seq[loc_length] = '\0';
 
-		min += loc_length;
-		max += loc_length;
-		free(ref_seq);
-	}
-	fai_destroy(ref_fai);
+	free(ref_seq);
 
-	seq[bp_cnt] = '\0';
 	return seq;
 }

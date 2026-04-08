@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <htslib/sam.h>
 #include <htslib/hts.h>
+#include <htslib/faidx.h>
 #include <zlib.h>
 #include <stdbool.h>
 #include "sonic/sonic.h"
@@ -37,7 +38,7 @@
 #define RETURN_ERROR 0
 
 #define MAX_BAMS 256
-#define MAXLISTBRKPOINTINTR 10000000;
+#define MAXLISTBRKPOINTINTR 10000000
 
 /* Maximum filename length */
 #define MAX_LENGTH 1024
@@ -83,12 +84,13 @@ typedef struct _params
 	int no_sr; /* Don't use split-read */
 	char *sonic_info; /* SONIC reference information string for building */
 	sonic *this_sonic; /* SONIC */
+	faidx_t *ref_fai; /* cached FASTA index */
 } parameters;
 
 typedef struct _bam_info
 {
 	int total_read_count_unfiltered; /* total number of reads that are > some mapping quality */
-	short* read_depth; /* read depth low qual */
+	int* read_depth; /* read depth */
 	float* mappability; /* mappability value for each base */
 	float mean;
 	float expected_read_depth[101];

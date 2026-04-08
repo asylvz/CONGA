@@ -13,8 +13,8 @@ void init_rd_per_chr( bam_info* in_bam, parameters* param, int chr_index)
 {
 	// For all the reads in the chromosome
 	in_bam->total_read_count_unfiltered = 0;
-	in_bam->read_depth = ( short*) getMem( sizeof( short) * ( param->this_sonic->chromosome_lengths[chr_index]));
-	memset (in_bam->read_depth, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(short)));
+	in_bam->read_depth = ( int*) getMem( sizeof( int) * ( param->this_sonic->chromosome_lengths[chr_index]));
+	memset (in_bam->read_depth, 0, (param->this_sonic->chromosome_lengths[chr_index] * sizeof(int)));
 }
 
 void init_mappability_per_chr(bam_info* in_bam, parameters* param, int chr_index)
@@ -77,8 +77,8 @@ void calc_mean_per_chr( parameters *params, bam_info* in_bam, int chr_index)
 	{
 		in_bam->expected_read_depth[i] = ( float)rd_per_gc_unfiltered[i] / ( window_per_gc[i]);
 
-		if( isnanf( in_bam->expected_read_depth[i]) || isinff( ( in_bam->expected_read_depth[i])) == -1
-				|| isinff( ( in_bam->expected_read_depth[i])) == 1 )
+		if( isnan( in_bam->expected_read_depth[i]) || isinf( ( in_bam->expected_read_depth[i])) == -1
+				|| isinf( ( in_bam->expected_read_depth[i])) == 1 )
 			in_bam->expected_read_depth[i] = 0;
 	}
 }

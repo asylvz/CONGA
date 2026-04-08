@@ -55,6 +55,10 @@ SplitRow *determine_SvType( splitRead *ptrSplitRead, posMapSplitRead *ptrPosMapS
 		pos2_1 = ptrSplitRead->pos;
 		pos2_2 = ptrSplitRead->pos + lengthRead;
 	}
+	else
+	{
+		return NULL;
+	}
 
 	if( pos1_2 >= pos2_1)
 		return NULL;
@@ -229,21 +233,21 @@ void read_bam( bam_info* in_bam, parameters *params)
 	int base_count_bam = 0;
 	long bp_cnt;
 
-	sprintf( svfile, "%s%s_svs.bed", params->outdir, params->outprefix);
+	snprintf( svfile, MAX_SEQ, "%s%s_svs.bed", params->outdir, params->outprefix);
 	fprintf( stderr, "\nOutput SV file: %s\n", svfile);
 	fpSVs = safe_fopen( svfile,"w");
 	fprintf(fpSVs,"#CHR\tSTART_SV\tEND_SV\tSV_TYPE\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\n");
 
 	if(params->del_file)
 	{
-		sprintf( svfile_del, "%s%s_dels.bed", params->outdir, params->outprefix);
+		snprintf( svfile_del, MAX_SEQ, "%s%s_dels.bed", params->outdir, params->outprefix);
 		fprintf( stderr, "Output Del file: %s\n", svfile_del);
 		fpDel = safe_fopen( svfile_del,"w");
 		fprintf(fpDel,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\tOBSERVED_READS\tEXPECTED_READS\n");
 	}
 	if(params->dup_file)
 	{
-		sprintf( svfile_dup, "%s%s_dups.bed", params->outdir, params->outprefix);
+		snprintf( svfile_dup, MAX_SEQ, "%s%s_dups.bed", params->outdir, params->outprefix);
 		fprintf( stderr, "Output DUP file: %s\n", svfile_dup);
 		fpDup = safe_fopen( svfile_dup,"w");
 		fprintf(fpDup,"#CHR\tSTART_SV\tEND_SV\tCOPY_NUMBER\tLIKELIHOOD\tREAD_PAIR\tMAPPABILITY\tOBSERVED_READS\tEXPECTED_READS\n");
@@ -272,10 +276,7 @@ void read_bam( bam_info* in_bam, parameters *params)
 			chr_index = params->first_chrom;
 
 		if (chr_index > params->last_chrom)
-		{
-			chr_index = params->this_sonic->number_of_chromosomes;
-			continue;
-		}
+			break;
 
 		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
 			continue;
@@ -348,6 +349,13 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 	bam_hdr_destroy(in_bam->bam_header);
 	hts_idx_destroy(in_bam->bam_file_index);
+
+	if(params->ref_fai != NULL)
+	{
+		fai_destroy(params->ref_fai);
+		params->ref_fai = NULL;
+	}
+
 
 	fprintf( stderr, "\n");
 

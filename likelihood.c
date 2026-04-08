@@ -43,12 +43,8 @@ void count_ReadPairs()
 	SplitRow *splitRowPtr;
 	SplitsInfo *aPtr = all_split_reads;
 
-	int split_del_cnt = 0, split_dup_cnt = 0;
-	int del_present = 0, del_border_present = 0, dup_present = 0, all_rp = 0, del_left, del_right, dup_left, dup_right, del_left_out, del_right_out;
+	int del_present = 0, del_border_present = 0, dup_present = 0;
 	int del_start, del_end, dup_start, dup_end, i;
-
-	int del_interval[50000];
-	int dup_interval[50000];
 
 	if(aPtr != NULL)
 	{
@@ -313,9 +309,6 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	sv_count = 0;
 	del_count = 0;
 	dup_count = 0;
-	int kmer_hash_size = 0;
-	long total_kmers = 0;
-
 	fprintf(stderr,"\nLoading known SVs");
 	load_known_SVs( &all_svs_del, &all_svs_dup, params, chr_name, &del_count, &dup_count);
 	fprintf( stderr, "(%d DELS, %d DUPS in chromosome %s - larger than the threshold %d)\n", del_count, dup_count, chr_name, params->min_sv_size);
@@ -332,6 +325,8 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 	if(sv_count == 0)
 	{
 		free(in_bam->read_depth);
+		if(!params->no_sr && params->dup_file)
+			free_splits(in_bam);
 		return;
 	}
 
