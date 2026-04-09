@@ -1,0 +1,6 @@
+   SW  perc perc perc  query      position in query           matching       repeat              position in  repeat
+score  div. del. ins.  sequence    begin     end    (left)    repeat         class/family         begin  end (left)   ID
+
+  200   5.0  0.0  0.0  chr1         1000     1100 (498900) +  AluSx          SINE/Alu               1    100  (200)    1
+  180   6.0  0.0  0.0  chr2         2000     2100 (297900) +  L1             LINE/L1                1    100  (200)    2
+  150   4.0  0.0  0.0  chr3         3000     3100 (196900) +  AluY           SINE/Alu               1    100  (200)    3

@@ -1,0 +1,8 @@
+conga
+conga-nocram
+conga.log
+src/*.o
+*.o
+test_data/output/
+test_data/test_gc
+test_data/test_gc_sonic_compare

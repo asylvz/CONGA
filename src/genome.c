@@ -5,7 +5,6 @@
 #include <math.h>
 #include "genome.h"
 
-/* Track memory usage (defined in common.c) */
 extern long long memUsage;
 
 static void* genome_getMem(size_t size)
@@ -47,12 +46,13 @@ genome_info* genome_load_from_bam(bam_hdr_t *bam_header)
 	return genome;
 }
 
+/* GC profile: 100bp non-overlapping windows, partial last window dropped */
 void genome_compute_gc_profile(genome_info *genome, const char *ref_seq, int seq_len, int chr_index)
 {
 	int num_windows = (seq_len / GC_WINDOW) + 1;
 	char *profile = (char*) calloc(num_windows, sizeof(char));
 	int gc = 0;
-	int char_count = 1; /* Match SONIC: char_count starts at 1 after FASTA header */
+	int char_count = 1;
 	int window_id = 0;
 	int i;
 
@@ -71,14 +71,13 @@ void genome_compute_gc_profile(genome_info *genome, const char *ref_seq, int seq
 		}
 	}
 
-	/* Match SONIC: partial last window is dropped (not written) */
-
 	if(genome->chromosome_gc_profile[chr_index] != NULL)
 		free(genome->chromosome_gc_profile[chr_index]);
 
 	genome->chromosome_gc_profile[chr_index] = profile;
 }
 
+/* Average GC content over a genomic range */
 float genome_get_gc_content(genome_info *genome, const char *chr_name, int pos_start, int pos_end)
 {
 	int chr_index = genome_find_chromosome_index(genome, chr_name);
@@ -103,25 +102,21 @@ float genome_get_gc_content(genome_info *genome, const char *chr_name, int pos_s
 		return 0.0;
 }
 
-/* Replicate sonic_this_interval_intersects exactly */
+/* Check whether two intervals overlap */
 static int interval_intersects(int pos_start, int pos_end, int start, int end)
 {
-	/* all in */
 	if(pos_start >= start && pos_end < end)
 		return 1;
-	/* all cover */
 	if(pos_start <= start && pos_end > end)
 		return 1;
-	/* left overlap */
 	if(pos_start <= start && pos_end >= start)
 		return 1;
-	/* right overlap */
 	if(pos_start <= end && pos_end > end)
 		return 1;
 	return 0;
 }
 
-/* Replicate sonic intersection_fraction exactly */
+/* Fraction of interval1 that overlaps with interval2 */
 static float intersection_fraction(int start_1, int end_1, int start_2, int end_2)
 {
 	if(start_1 >= start_2 && end_1 <= end_2)
@@ -135,7 +130,7 @@ static float intersection_fraction(int start_1, int end_1, int start_2, int end_
 	return 0.0;
 }
 
-/* Replicate sonic_intersect binary search exactly */
+/* Binary search for an overlapping repeat interval */
 static repeat_interval* genome_intersect(genome_info *genome, const char *chr_name, int pos_start, int pos_end)
 {
 	int start, end, med;
@@ -165,7 +160,6 @@ static repeat_interval* genome_intersect(genome_info *genome, const char *chr_na
 		if(interval_intersects(pos_start, pos_end, interval_list[med].start, interval_list[med].end))
 			return &interval_list[med];
 
-		/* no hit. search is exhausted */
 		if(start == med || end == med)
 		{
 			if(interval_intersects(pos_start, pos_end, interval_list[start].start, interval_list[start].end))
@@ -175,14 +169,12 @@ static repeat_interval* genome_intersect(genome_info *genome, const char *chr_na
 			return NULL;
 		}
 
-		/* no hit, search left half */
 		else if(pos_start < interval_list[med].start)
 		{
 			end = med;
 			med = (start + end) / 2;
 		}
 
-		/* no hit, search right half */
 		else
 		{
 			start = med;
@@ -193,8 +185,7 @@ static repeat_interval* genome_intersect(genome_info *genome, const char *chr_na
 	return NULL;
 }
 
-/* Replicate sonic_is_satellite exactly:
- * Search ALL repeats, check if the found one is a satellite */
+/* Return satellite overlap fraction for a query interval, 0 if not satellite */
 float genome_is_satellite(genome_info *genome, const char *chr_name, int pos_start, int pos_end)
 {
 	repeat_interval *interval;
@@ -226,6 +217,7 @@ static int compare_repeat(const void *a, const void *b)
 	return ra->end - rb->end;
 }
 
+/* Load repeat regions from a tab-delimited file: chr start end type class */
 void genome_load_repeats(genome_info *genome, const char *reps_file)
 {
 	FILE *fp;
@@ -262,7 +254,7 @@ void genome_load_repeats(genome_info *genome, const char *reps_file)
 		{
 			genome->reps[i] = (repeat_interval*) genome_getMem(
 				sizeof(repeat_interval) * genome->number_of_repeats_in_chromosome[i]);
-			genome->number_of_repeats_in_chromosome[i] = 0; /* reset for second pass */
+			genome->number_of_repeats_in_chromosome[i] = 0;
 		}
 	}
 
@@ -306,7 +298,7 @@ void genome_load_repeats(genome_info *genome, const char *reps_file)
 
 	fclose(fp);
 
-	/* Sort each chromosome's repeats by start position for binary search */
+	/* Sort per-chromosome arrays by position for binary search */
 	for(i = 0; i < genome->number_of_chromosomes; i++)
 	{
 		if(genome->number_of_repeats_in_chromosome[i] > 0)
@@ -322,11 +314,11 @@ void genome_load_repeats(genome_info *genome, const char *reps_file)
 	fprintf(stderr, "[CONGA INFO] Loaded %d repeat regions from %s\n", total, reps_file);
 }
 
+/* Find chromosome index by name, with cache for sequential access */
 int genome_find_chromosome_index(genome_info *genome, const char *chr_name)
 {
 	int i;
 
-	/* Cache: return immediately if same chromosome as last query */
 	if(genome->last_chromosome_index != -1 &&
 	   strcmp(genome->chromosome_names[genome->last_chromosome_index], chr_name) == 0)
 		return genome->last_chromosome_index;
