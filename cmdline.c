@@ -13,11 +13,10 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
-	static int load_sonic = 0, no_sr = 1;
-	static int do_remap = 0;
+	static int no_sr = 1;
 	char *c_score = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
-	static struct option long_options[] = 
+	static struct option long_options[] =
 	{
 			{"c-score", required_argument, 0, 'a'},
 			{"min-read-length"    , required_argument,	 0, 'b'},
@@ -29,9 +28,8 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			{"rp", required_argument, 0, 'j'},
 			{"min-sv-size"    , required_argument,	 0, 'l'},
 			{"mappability"    , required_argument,	 0, 'm'},
-			{"sonic-info"    , required_argument,	 0, 'n'},
 			{"out"    , required_argument,	 0, 'o'},
-			{"sonic"    , required_argument,	 0, 's'},
+			{"reps"    , required_argument,	 0, 's'},
 			{"dups"    , required_argument,   0, 'u'},
 			{"version", no_argument,         0, 'v'},
 			{"exclude", required_argument, 0,'x'},
@@ -47,7 +45,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		return 0;
 	}
 
-	while( ( o = getopt_long( argc, argv, "hvb:i:f:g:d:r:o:m:c:s:a:e:n:j:k:u:x:", long_options, &index)) != -1)
+	while( ( o = getopt_long( argc, argv, "hvb:i:f:g:d:r:o:m:c:s:a:e:j:k:u:x:", long_options, &index)) != -1)
 	{
 		switch( o)
 		{
@@ -92,17 +90,12 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			set_str( &( params->mappability_file), optarg);
 			break;
 
-		case 'n':
-			set_str( &( params->sonic_info), optarg);
-			break;
-
 		case 'o':
 			set_str( &( params->outprefix), optarg);
 			break;
 
 		case 's':
-			set_str( &( params->sonic_file), optarg);
-			load_sonic = 1;
+			set_str( &( params->reps_file), optarg);
 			break;
 
 		case 'u':
@@ -146,13 +139,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 	}
 
 
-	/* check if --sonic  is invoked */
-	if( params->sonic_file == NULL && load_sonic)
-	{
-		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter the SONIC file (BED) using the --sonic option.\n");
-		return EXIT_PARAM_ERROR;
-	}
-
 	if( params->min_sv_size <= 0)
 	{
 		params->min_sv_size = 1000;
@@ -193,13 +179,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		free( min_mapping_qual);
 	}
 
-	if (load_sonic)
-		params->load_sonic = load_sonic;
-
-	if ( params->sonic_info == NULL)
-		set_str( &(params->sonic_info), params->ref_genome);
-
-	//params->no_sr = no_sr;
 	get_working_directory(params);
 	fprintf(stderr, "[CONGA INFO] Working directory: %s\n", params->outdir);
 
@@ -215,8 +194,8 @@ void print_help( void)
 	fprintf( stdout, "\t--input [BAM file]        : Input file in sorted and indexed BAM format (required).\n");
 	fprintf( stdout, "\t--out [output prefix]     : Prefix for the output file names (required).\n");
 	fprintf( stdout, "\t--ref [reference genome]  : Reference genome in FASTA format (required).\n");
-	fprintf( stdout, "\t--sonic [sonic file]      : SONIC file that contains assembly annotations (required).\n");
 	fprintf( stdout, "\t--dels [BED file]         : Known deletion SVs in BED format\n");
+	fprintf( stdout, "\t--reps [repeats file]     : Repeat regions file: chr start end type class (optional).\n");
 	fprintf( stdout, "\t--dups [BED file]         : Known duplication SVs in BED format\n");
 	fprintf( stdout, "\t--first-chr [chr index]   : The index of the first chromosome for genotyping in your BAM\n");
 	fprintf( stdout, "\t--last-chr [chr index]    : The index of the last chromosome for genotyping in your BAM\n");

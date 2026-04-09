@@ -11,7 +11,6 @@ CONGA is developed and tested using Linux Ubuntu operating system
 
  * htslib	(included as submodule; http://htslib.org/)
  	* libbz2, liblzma, libcurl are required by htslib
- * sonic  	(included as submodule; https://github.com/calkan/sonic)
  
 *Installing development libraries (requires sudo access):* ***"sudo apt-get install zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"***
 
@@ -20,10 +19,11 @@ CONGA is developed and tested using Linux Ubuntu operating system
 	git clone https://github.com/asylvz/CONGA --recursive
 	cd CONGA && make libs && make
 
-	./conga -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
+	./conga -i myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
-		
-* If you use a X86_64 Linux machine, you can directly use our binary file (under "Relases") after ***"sudo chmod 755 conga_v1.0_X86_64"***
+
+* Optionally, you can provide a repeats file for satellite detection: `--reps repeats.bed`
+* If you use a X86_64 Linux machine, you can directly use our binary file (under "Releases") after ***"sudo chmod 755 conga_v1.0_X86_64"***
 
 ## Compiling and running without sudo access
 
@@ -31,7 +31,7 @@ If you do not have root access to install liblzma and/or libbz2, you can compile
 	
 	make nocram
 
-	./conga-nocram -i myinput.bam --ref human_g1k_v37.fasta --sonic human_g1k_v37.sonic  \
+	./conga-nocram -i myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 ## Docker Usage
@@ -43,22 +43,22 @@ Another alternative to run CONGA is using [Docker](https://www.docker.com)
 
 Your image named "conga" should be ready. You can run CONGA using this image by
 
-	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga -i /input/myinput.bam --sonic /input/human_g1k_v37.sonic --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
+	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga -i /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 Alternatively, you can pull from Docker Hub:
 
 	docker pull asylvz/conga
 
 
-## SONIC file (required)
+## Repeats file (optional)
 
-You need to input a SONIC file as input to CONGA (--sonic). This file contains some annotation based on the reference genome that you use. You can use one of the already created ones from: https://github.com/BilkentCompGen/sonic-prebuilt
+You can optionally provide a repeats file for satellite detection using `--reps`. The file should be tab-delimited with 5 columns:
 
- * human_g1k_v37.sonic: SONIC file for Human Reference Genome GRCh37 (1000 Genomes Project version)
- * ucsc_hg19.sonic: SONIC file for the human reference genome, UCSC version build hg19.
- * ucsc_hg38.sonic: SONIC file for the human reference genome build 38.
+	chr1	10000	20000	(CATTC)n	Satellite
+	chr1	50000	60000	L1ME1		LINE/L1
 
-If you are working with a different reference genome, you need to create the SONIC file yourself. This is a straightforward process; please refer to the SONIC development repository: https://github.com/calkan/sonic/
+* The columns are "Chromosome Name" (TAB) "Start" (TAB) "End" (TAB) "Repeat Type" (TAB) "Repeat Class"
+* This can be generated from RepeatMasker output. All repeats are loaded; satellite filtering (looking for "Satel" in type or class) is done at runtime.
 
 
 ## Sample Genotype file (required)
@@ -93,7 +93,7 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--input 		[BAM file]         : Input files in sorted and indexed BAM format. (required)
 	--out   		[output prefix]    : Prefix for the output file names. (required)
 	--ref   		[reference genome] : Reference genome in FASTA format. (required)
-	--sonic 		[sonic file]       : SONIC file that contains assembly annotations. (required)
+	--reps          	[repeats file]     : Repeat regions file for satellite detection (optional).
 	--dels          	[bed file]         : Known deletion SVs in bed format
 	--dups          	[bed file]         : Known duplication SVs in bed format
 	--mappability   	[bed file]         : Mappability file in BED format

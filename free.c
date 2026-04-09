@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "free.h"
 #include "split_read.h"
 
@@ -83,8 +84,7 @@ void free_DS(bam_info* in_bam, parameters *params)
 	free( params->ref_genome);
 	free( params->outprefix);
 	free( params->outdir);
-	free( params->sonic_file);
-	free( params->sonic_info);
+	free( params->reps_file);
 	free( params->mappability_file);
 	free( params);
 

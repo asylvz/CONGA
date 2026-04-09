@@ -1,5 +1,8 @@
 
 #include "split_read.h"
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include <htslib/faidx.h>
 #include <time.h>
 
@@ -229,7 +232,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 
 		/* Get the name of the chromosome */
 		newEl->chromosome_name = NULL;
-		set_str( &(newEl->chromosome_name), params->this_sonic->chromosome_names[chr_index]);
+		set_str( &(newEl->chromosome_name), params->genome->chromosome_names[chr_index]);
 
 		newEl->pos = bam_alignment_core.pos;
 		newEl->qual = bam_alignment_core.qual;
@@ -295,7 +298,7 @@ int find_split_reads( bam_info* in_bam, parameters* params, bam1_t* bam_alignmen
 
 		/* Get the name of the chromosome */
 		newEl2->chromosome_name = NULL;
-		set_str( &(newEl2->chromosome_name), params->this_sonic->chromosome_names[chr_index]);
+		set_str( &(newEl2->chromosome_name), params->genome->chromosome_names[chr_index]);
 
 		newEl2->pos = bam_alignment_core.pos + (bam_alignment_core.l_qseq / 2);
 		newEl2->qual = bam_alignment_core.qual;

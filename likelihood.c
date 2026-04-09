@@ -110,7 +110,7 @@ void calculate_likelihood_CNV(bam_info *in_bam, parameters *params, svs arr[], i
 
 	for( i = arr[count].start; i < arr[count].end; i++)
 	{
-		gc_val = ( int)round ( sonic_get_gc_content(params->this_sonic, arr[count].chr_name, i, i + WINDOWSLIDE));
+		gc_val = ( int)round ( genome_get_gc_content(params->genome, arr[count].chr_name, i, i + WINDOWSLIDE));
 
 		expected_rd += in_bam->expected_read_depth[gc_val];
 		observed_rd += in_bam->read_depth[i];

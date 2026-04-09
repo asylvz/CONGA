@@ -7,7 +7,7 @@
 #include <htslib/faidx.h>
 #include <zlib.h>
 #include <stdbool.h>
-#include "sonic/sonic.h"
+#include "genome.h"
 
 
 #define DELETION 'D'
@@ -78,12 +78,10 @@ typedef struct _params
 	int rp_support; /* Minimum number of read-pairs needed to support duplications */
 	char *ref_seq; /* reference sequence per chromosome */
 	int hash_size; /* size of the hash table for split read mapping */
-	char *sonic_file; /* SONIC file name */
+	char *reps_file; /* repeat regions file (chr start end type class) */
 	char *mappability_file; /* a file that contains mappability information for various intervals */
-	int load_sonic; /*load SONIC file*/
 	int no_sr; /* Don't use split-read */
-	char *sonic_info; /* SONIC reference information string for building */
-	sonic *this_sonic; /* SONIC */
+	genome_info *genome; /* genome information (chromosomes, GC, satellites) */
 	faidx_t *ref_fai; /* cached FASTA index */
 } parameters;
 

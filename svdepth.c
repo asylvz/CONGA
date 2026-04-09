@@ -1,10 +1,10 @@
 #include "svdepth.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "bam_data.h"
 #include "cmdline.h"
-#include "sonic/sonic.h"
 #include "free.h"
 #include "read_distribution.h"
 #include "split_read.h"
@@ -42,12 +42,6 @@ int main( int argc, char** argv)
 		return EXIT_SUCCESS;
 
 	print_params( params);
-
-	/* Load SONIC */
-	params->this_sonic = sonic_load(params->sonic_file);
-
-	if (params->last_chrom < params->first_chrom)
-		params->last_chrom = params->this_sonic->number_of_chromosomes - 1;
 
 	/* Read BAM files */
 	in_bam = ( bam_info*) getMem( sizeof( bam_info));

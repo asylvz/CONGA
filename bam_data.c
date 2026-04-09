@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include <math.h>
 #include "free.h"
 #include "likelihood.h"
@@ -97,13 +98,13 @@ int read_SplitReads(splitRead *ptrSoftClip, parameters *params, int chr_index)
 		ptrPosMapSoftClip = ptrSoftClip->ptrSplitMap;
 		while( ptrPosMapSoftClip != NULL)
 		{
-			is_satellite = sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrSoftClip->pos, ptrSoftClip->pos + 1 ) +
-					sonic_is_satellite( params->this_sonic, ptrSoftClip->chromosome_name, ptrPosMapSoftClip->posMap, ptrPosMapSoftClip->posMap + 1);
+			is_satellite = genome_is_satellite( params->genome, ptrSoftClip->chromosome_name, ptrSoftClip->pos, ptrSoftClip->pos + 1 ) +
+					genome_is_satellite( params->genome, ptrSoftClip->chromosome_name, ptrPosMapSoftClip->posMap, ptrPosMapSoftClip->posMap + 1);
 
 			newRow = NULL;
-			if ( is_satellite == 0 && ptrSoftClip->qual > params->mq_threshold && strcmp(ptrSoftClip->chromosome_name, params->this_sonic->chromosome_names[chr_index]) == 0
+			if ( is_satellite == 0 && ptrSoftClip->qual > params->mq_threshold && strcmp(ptrSoftClip->chromosome_name, params->genome->chromosome_names[chr_index]) == 0
 					&& ptrPosMapSoftClip->mapq > params->mq_threshold && ptrSoftClip->pos > 0 && ptrPosMapSoftClip->posMap > 0
-					&& ptrSoftClip->pos < params->this_sonic->chromosome_lengths[chr_index] && ptrPosMapSoftClip->posMap < params->this_sonic->chromosome_lengths[chr_index])
+					&& ptrSoftClip->pos < params->genome->chromosome_lengths[chr_index] && ptrPosMapSoftClip->posMap < params->genome->chromosome_lengths[chr_index])
 			{
 				newRow = determine_SvType(ptrSoftClip, ptrPosMapSoftClip);
 				if( newRow != NULL)
@@ -208,7 +209,7 @@ void count_reads_bam( bam_info* in_bam, parameters* params, int chr_index, int* 
 
 		if(bam_alignment_core.qual > params->mq_threshold)
 		{
-			if( !params->no_sr && params->dup_file && bam_alignment_core.l_qseq > params->min_read_length && is_proper( bam_alignment_core.flag) && sonic_is_satellite( params->this_sonic, params->this_sonic->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0)
+			if( !params->no_sr && params->dup_file && bam_alignment_core.l_qseq > params->min_read_length && is_proper( bam_alignment_core.flag) && genome_is_satellite( params->genome, params->genome->chromosome_names[chr_index], bam_alignment_core.pos, bam_alignment_core.pos + 20) == 0)
 			{
 				return_type = find_split_reads( in_bam, params, bam_alignment, chr_index);
 			}
@@ -270,7 +271,17 @@ void read_bam( bam_info* in_bam, parameters *params)
 	/* Extract the Sample Name from the header text */
 	get_sample_name( in_bam, in_bam->bam_header->text);
 
-	for( chr_index = 0; chr_index < params->this_sonic->number_of_chromosomes; chr_index++)
+	/* Load genome info from BAM header */
+	params->genome = genome_load_from_bam( in_bam->bam_header);
+
+	if (params->last_chrom < params->first_chrom)
+		params->last_chrom = params->genome->number_of_chromosomes - 1;
+
+	/* Load repeat regions if provided */
+	if(params->reps_file != NULL)
+		genome_load_repeats(params->genome, params->reps_file);
+
+	for( chr_index = 0; chr_index < params->genome->number_of_chromosomes; chr_index++)
 	{
 		if (chr_index < params->first_chrom)
 			chr_index = params->first_chrom;
@@ -278,20 +289,20 @@ void read_bam( bam_info* in_bam, parameters *params)
 		if (chr_index > params->last_chrom)
 			break;
 
-		if( strstr( params->this_sonic->chromosome_names[chr_index], "X") != NULL || strstr( params->this_sonic->chromosome_names[chr_index], "Y") != NULL)
+		if( strstr( params->genome->chromosome_names[chr_index], "X") != NULL || strstr( params->genome->chromosome_names[chr_index], "Y") != NULL)
 			continue;
 
 
-		chr_index_bam = find_chr_index_bam( params->this_sonic->chromosome_names[chr_index], in_bam->bam_header);
+		chr_index_bam = find_chr_index_bam( params->genome->chromosome_names[chr_index], in_bam->bam_header);
 		not_in_bam = 0;
 		if( chr_index_bam == -1)
 		{
-			fprintf( stderr, "\nCannot find chromosome name %s in BAM/CRAM %s", params->this_sonic->chromosome_names[chr_index], in_bam->sample_name);
+			fprintf( stderr, "\nCannot find chromosome name %s in BAM/CRAM %s", params->genome->chromosome_names[chr_index], in_bam->sample_name);
 			not_in_bam = 1;
 			continue;
 		}
 
-		in_bam->iter = sam_itr_queryi( in_bam->bam_file_index, chr_index_bam, 0, params->this_sonic->chromosome_lengths[chr_index]);
+		in_bam->iter = sam_itr_queryi( in_bam->bam_file_index, chr_index_bam, 0, params->genome->chromosome_lengths[chr_index]);
 		if( in_bam->iter == NULL)
 		{
 			fprintf( stderr, "Error: Iterator cannot be loaded (bam_itr_queryi)\n");
@@ -303,6 +314,19 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 		/* Initialize the read depth and read count */
 		init_rd_per_chr( in_bam, params, chr_index);
+
+		/* Compute GC profile for this chromosome from reference */
+		{
+			char *ref_seq_gc;
+			int loc_length;
+			ref_seq_gc = faidx_fetch_seq( params->ref_fai ? params->ref_fai : (params->ref_fai = fai_load(params->ref_genome)),
+				params->genome->chromosome_names[chr_index], 0, params->genome->chromosome_lengths[chr_index] - 1, &loc_length);
+			if(ref_seq_gc != NULL)
+			{
+				genome_compute_gc_profile(params->genome, ref_seq_gc, loc_length, chr_index);
+				free(ref_seq_gc);
+			}
+		}
 
 		if(!params->no_sr && params->dup_file)
 		{
@@ -349,6 +373,12 @@ void read_bam( bam_info* in_bam, parameters *params)
 
 	bam_hdr_destroy(in_bam->bam_header);
 	hts_idx_destroy(in_bam->bam_file_index);
+
+	if(params->genome != NULL)
+	{
+		genome_free(params->genome);
+		params->genome = NULL;
+	}
 
 	if(params->ref_fai != NULL)
 	{

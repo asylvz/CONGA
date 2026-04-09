@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 
 #include <htslib/sam.h>
@@ -24,8 +25,8 @@ void init_params( parameters** params)
 	( *params)->del_file = NULL;
 	( *params)->low_map_regions = NULL;
 	( *params)->mappability_file= NULL;
-	( *params)->sonic_file = NULL;
-	( *params)->this_sonic = NULL;
+	( *params)->reps_file = NULL;
+	( *params)->genome = NULL;
 	( *params)->outprefix = NULL;
 	( *params)->outdir = NULL;
 	( *params)->bam_file = NULL;
@@ -34,8 +35,6 @@ void init_params( parameters** params)
 	( *params)->rp_support = 0;
 	( *params)->first_chrom = 0;
 	( *params)->last_chrom = -1;
-	( *params)->load_sonic = 0;
-	( *params)->sonic_info = NULL;
 	( *params)->ref_seq = NULL;
 	( *params)->hash_size = 0;
 	( *params)->min_read_length = 0;
@@ -93,10 +92,8 @@ void print_params( parameters* params)
 	printf( "%-30s%s\n","BAM input:",params->bam_file);
 	fprintf( logFile,"%-30s%s\n","BAM input:",params->bam_file);
 	printf( "%-30s%s\n","Reference genome:", params->ref_genome);
-	printf( "%-30s%s\n","SONIC file:", params->sonic_file);
 
 	fprintf( logFile, "%-30s%s\n","Reference genome:", params->ref_genome);
-	fprintf( logFile, "%-30s%s\n","SONIC file:", params->sonic_file);
 	fprintf( logFile, "%-30s%d\n","First chrom:", params->first_chrom);
 	fprintf( logFile, "%-30s%d\n","Last chrom:", params->last_chrom);
 }
@@ -443,7 +440,7 @@ long readReferenceSeq( parameters *params, int chr_index)
 		return -1;
 	}
 
-	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], 0, params->this_sonic->chromosome_lengths[chr_index] - 1, &loc_length);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->genome->chromosome_names[chr_index], 0, params->genome->chromosome_lengths[chr_index] - 1, &loc_length);
 
 	params->ref_seq = ( char *) getMem( (loc_length + 1) * sizeof( char));
 
@@ -463,9 +460,9 @@ char* get_refseq( parameters *params, char* chr_name, int start, int end)
 	int loc_length, chr_index;
 	char *ref_seq;
 
-	chr_index = sonic_refind_chromosome_index( params->this_sonic, chr_name);
+	chr_index = genome_find_chromosome_index( params->genome, chr_name);
 
-	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], start, end, &loc_length);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->genome->chromosome_names[chr_index], start, end, &loc_length);
 
 	return ref_seq;
 }
@@ -476,7 +473,7 @@ char* read_ref( parameters *params, int chr_index)
 	char *ref_seq;
 	char* seq = NULL;
 
-	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->this_sonic->chromosome_names[chr_index], 0, params->this_sonic->chromosome_lengths[chr_index] - 1, &loc_length);
+	ref_seq = faidx_fetch_seq( get_ref_fai(params), params->genome->chromosome_names[chr_index], 0, params->genome->chromosome_lengths[chr_index] - 1, &loc_length);
 
 	seq = ( char *) getMem( (loc_length + 1) * sizeof( char));
 
