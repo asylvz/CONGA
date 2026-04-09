@@ -104,7 +104,6 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: no-filter)
 	--c-score               [float]            : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).
 	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).
-	--exclude               [BED file]         : Regions to exclude from analysis in BED format.
 	
 	Information:
 	--version                  		   : Print version and exit.

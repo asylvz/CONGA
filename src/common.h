@@ -64,7 +64,6 @@ typedef struct _params
 {
 	char* ref_genome; /* path to reference genome - fasta */
 	char* outdir;
-	char *low_map_regions; /*Regions with low mappability is excluded from consideration - a BED input is required */
 	char *dup_file;
 	char *del_file;
 	char* bam_file; /* the actual list that holds all bam file paths after tokenization */

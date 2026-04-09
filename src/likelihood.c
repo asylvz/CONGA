@@ -330,12 +330,6 @@ void find_SVs( bam_info *in_bam, parameters *params, FILE* fp_del, FILE* fp_dup,
 		return;
 	}
 
-	if(params->low_map_regions != NULL)
-	{
-		//fprintf(stderr,"Loading Low mappability regions\n");
-		check_low_mappability(params, all_svs_del, all_svs_dup, chr_name, del_count, dup_count);
-	}
-
 	if(!params->no_sr && params->dup_file)
 	{
 		count_ReadPairs();

@@ -23,7 +23,6 @@ void init_params( parameters** params)
 	( *params)->ref_genome = NULL;
 	( *params)->dup_file = NULL;
 	( *params)->del_file = NULL;
-	( *params)->low_map_regions = NULL;
 	( *params)->mappability_file= NULL;
 	( *params)->reps_file = NULL;
 	( *params)->genome = NULL;

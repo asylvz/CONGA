@@ -31,7 +31,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			{"reps"    , required_argument,	 0, 's'},
 			{"dups"    , required_argument,   0, 'u'},
 			{"version", no_argument,         0, 'v'},
-			{"exclude", required_argument, 0,'x'},
 			{"first-chr", required_argument, 0, FIRST_CHROM},
 			{"last-chr", required_argument, 0, LAST_CHROM},
 			{0        , 0,                   0,  0 }
@@ -43,7 +42,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		return 0;
 	}
 
-	while( ( o = getopt_long( argc, argv, "hvb:i:f:d:o:m:s:a:e:j:l:u:x:", long_options, &index)) != -1)
+	while( ( o = getopt_long( argc, argv, "hvb:i:f:d:o:m:s:a:e:j:l:u:", long_options, &index)) != -1)
 	{
 		switch( o)
 		{
@@ -105,10 +104,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			fprintf( stderr, "\n\tCONGA Version %s\n\tLast update: %s, build date: %s\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
 			fprintf(stderr,"\tFor more information, check https://github.com/asylvz/CONGA\n\n");
 			return EXIT_SUCCESS;
-			break;
-
-		case 'x':
-			set_str( &( params->low_map_regions), optarg);
 			break;
 
 		case FIRST_CHROM:
@@ -210,7 +205,6 @@ void print_help( void)
 	fprintf( stdout, "\t--min-mapq [INT]          : Minimum mapping quality filter for reads (default: no-filter)\n");
 	fprintf( stdout, "\t--c-score [FLOAT]         : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).\n");
 	fprintf( stdout, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).\n");
-	fprintf( stdout, "\t--exclude [BED file]      : Regions to exclude from analysis in BED format\n");
 
 	fprintf( stdout, "\n\tInformation:\n");
 	fprintf( stdout, "\t--version                 : Print version and exit.\n");

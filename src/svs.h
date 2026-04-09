@@ -24,10 +24,8 @@ typedef struct _svs
 	double lhetero;
 	double lnone;
 	double mappability;
-	bool low_mappability;
 }svs;
 
 void load_mappability_regions(bam_info* in_bam, parameters *params, char* chr);
-void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, char* chr, int del_count, int dup_count);
 int load_known_SVs(svs** vars_del, svs** vars_dup, parameters *params, char* chr, int* del_count, int* dup_count);
 #endif /* SVS_H_ */
