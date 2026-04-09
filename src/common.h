@@ -15,7 +15,6 @@
 
 #define KMER 33
 #define KMERSLIDE 5
-#define MINKMERHASHSIZE 20
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -31,14 +30,12 @@
 #define EXIT_EXTERNAL_PROG_ERROR 4
 #define EXIT_FILE_OPEN_ERROR 5
 #define EXIT_READGROUP 6
-#define EXIT_SONIC 7
 
 /* Return Codes */
 #define RETURN_SUCCESS 1
 #define RETURN_ERROR 0
 
 #define MAX_BAMS 256
-#define MAXLISTBRKPOINTINTR 10000000
 
 /* Maximum filename length */
 #define MAX_LENGTH 1024
@@ -46,9 +43,6 @@
 // Track memory usage
 extern long long memUsage;
 extern FILE *logFile; //Defined in tardis.c
-
-/* Gender of the bam file */
-enum gender{ MALE, FEMALE};
 
 extern struct SplitsInfo *all_split_reads;
 
@@ -97,7 +91,6 @@ typedef struct _bam_info
 	hts_itr_t *iter;
 	bam_hdr_t* bam_header;
 
-	enum gender sample_gender; /* gender of the sample */
 	char* sample_name; /* name of the sample, parsed from SM in the BAM header */
 	struct splitRead *listSplitRead;
 } bam_info;

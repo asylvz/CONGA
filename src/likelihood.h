@@ -9,10 +9,6 @@
 #include "read_distribution.h"
 
 #define inf 10000000 // a constant to represent infinity
-#define TRUE 1
-#define FALSE 0
-#define true 1
-#define false 0
 
 #define WRONGMAP_WINDOW 100
 #define WRONGMAP_WINDOW_DEL 5000

@@ -41,7 +41,6 @@ typedef struct splitRead
 	int pos;
 	char orient;
 	int qual;
-	int opCount;
 	int split_start;
 	int read_length;
 	//char *split_sequence;

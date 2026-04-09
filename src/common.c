@@ -1,8 +1,6 @@
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <time.h>
 
 #include <htslib/sam.h>
 #include <htslib/hts.h>
