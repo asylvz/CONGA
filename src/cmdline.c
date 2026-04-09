@@ -13,7 +13,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 {
 	int index;
 	int o;
-	static int no_sr = 1;
 	char *c_score = NULL, *min_mapping_qual = NULL, *min_rp_support = NULL;
 
 	static struct option long_options[] =
@@ -33,7 +32,6 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 			{"dups"    , required_argument,   0, 'u'},
 			{"version", no_argument,         0, 'v'},
 			{"exclude", required_argument, 0,'x'},
-			{"no-sr", no_argument, &no_sr, 1},
 			{"first-chr", required_argument, 0, FIRST_CHROM},
 			{"last-chr", required_argument, 0, LAST_CHROM},
 			{0        , 0,                   0,  0 }
@@ -45,7 +43,7 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		return 0;
 	}
 
-	while( ( o = getopt_long( argc, argv, "hvb:i:f:g:d:r:o:m:c:s:a:e:j:k:u:x:", long_options, &index)) != -1)
+	while( ( o = getopt_long( argc, argv, "hvb:i:f:d:o:m:s:a:e:j:l:u:x:", long_options, &index)) != -1)
 	{
 		switch( o)
 		{
@@ -131,7 +129,14 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 		return EXIT_PARAM_ERROR;
 	}
 
-	/* check if --ref   is invoked */
+	/* check if --input is invoked */
+	if( params->bam_file == NULL)
+	{
+		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter the input BAM file using the --input option.\n");
+		return EXIT_PARAM_ERROR;
+	}
+
+	/* check if --ref is invoked */
 	if( params->ref_genome == NULL)
 	{
 		fprintf( stderr, "[CONGA CMDLINE ERROR] Please enter reference genome file (FASTA) using the --ref option.\n");
@@ -199,14 +204,15 @@ void print_help( void)
 	fprintf( stdout, "\t--dups [BED file]         : Known duplication SVs in BED format\n");
 	fprintf( stdout, "\t--first-chr [chr index]   : The index of the first chromosome for genotyping in your BAM\n");
 	fprintf( stdout, "\t--last-chr [chr index]    : The index of the last chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--mapability [BED file]   : Mappability file in BED format\n");
+	fprintf( stdout, "\t--mappability [BED file]  : Mappability file in BED format\n");
 	fprintf( stdout, "\t--min-read-length [INT]   : Minimum length of a read to be processed for RP (default: 60 bps)\n");
 	fprintf( stdout, "\t--min-sv-size [INT]       : Minimum length of a CNV (default: 1000 bps)\n");
 	fprintf( stdout, "\t--min-mapq [INT]          : Minimum mapping quality filter for reads (default: no-filter)\n");
 	fprintf( stdout, "\t--c-score [FLOAT]         : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).\n");
-	fprintf( stdout, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).");
+	fprintf( stdout, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).\n");
+	fprintf( stdout, "\t--exclude [BED file]      : Regions to exclude from analysis in BED format\n");
 
-	fprintf( stdout, "\n\n\tInformation:\n");
+	fprintf( stdout, "\n\tInformation:\n");
 	fprintf( stdout, "\t--version                 : Print version and exit.\n");
 	fprintf( stdout, "\t--help                    : Print this help screen and exit.\n\n");
 	fprintf(stderr,"\n\t* For more information, please consult https://github.com/asylvz/CONGA\n\n");

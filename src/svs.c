@@ -245,7 +245,7 @@ void check_low_mappability(parameters *params, svs* vars_del, svs* vars_dup, cha
 				}
 			}
 		}
-		if(!params->dup_file)
+		if(params->dup_file)
 		{
 			for(i = 0; i < dup_count; i++)
 			{

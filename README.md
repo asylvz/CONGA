@@ -71,8 +71,8 @@ You can optionally provide a repeats file for satellite detection using `--reps`
 	1	2374226		2379823
 	...
 
-* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Postion of a CNV"
-* This file should be seperate for duplications and deletions if both are to be genotyped.
+* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Position of a CNV"
+* This file should be separate for duplications and deletions if both are to be genotyped.
 
 ## Sample Mappability File (optional)
 
@@ -84,7 +84,7 @@ You can optionally provide a repeats file for satellite detection using `--reps`
 
 Using a mappability file (--mappability) increases the accuracy of CONGA's predictions. We used the 100-mer mappability file from http://hgdownload.cse.ucsc.edu/goldenpath/hg19/encodeDCC/wgEncodeMapability/ and converted the bigWig file into a BED file using "bigWigToBedGraph".
 
-* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Postion of a CNV" (TAB) "Mappability value"
+* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Position of a CNV" (TAB) "Mappability value"
     * Note that the mappability value should be between [0,1], where lower values indicate lower mappability intervals, i.e., repeat-rich regions, etc. 
 
 
@@ -101,9 +101,10 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
 	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps)
 	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps)
-	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: -1)
+	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: no-filter)
 	--c-score               [float]            : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).
 	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).
+	--exclude               [BED file]         : Regions to exclude from analysis in BED format.
 	
 	Information:
 	--version                  		   : Print version and exit.
