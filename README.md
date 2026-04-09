@@ -19,11 +19,10 @@ CONGA is developed and tested using Linux Ubuntu operating system
 	git clone https://github.com/asylvz/CONGA --recursive
 	cd CONGA && make libs && make
 
-	./conga -i myinput.bam --ref human_g1k_v37.fasta \
+	./conga --input myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 * Optionally, you can provide a repeats file for satellite detection: `--reps repeats.bed`
-* If you use a X86_64 Linux machine, you can directly use our binary file (under "Releases") after ***"sudo chmod 755 conga_v1.0_X86_64"***
 
 ## Compiling and running without sudo access
 
@@ -31,7 +30,7 @@ If you do not have root access to install liblzma and/or libbz2, you can compile
 	
 	make nocram
 
-	./conga-nocram -i myinput.bam --ref human_g1k_v37.fasta \
+	./conga-nocram --input myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
 ## Docker Usage
@@ -43,11 +42,35 @@ Another alternative to run CONGA is using [Docker](https://www.docker.com)
 
 Your image named "conga" should be ready. You can run CONGA using this image by
 
-	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga -i /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
+	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga --input /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 Alternatively, you can pull from Docker Hub:
 
 	docker pull asylvz/conga
+
+
+## Output
+
+CONGA produces three output files based on the `--out` prefix:
+
+* `<prefix>_svs.bed` — Filtered SV calls (deletions and duplications combined), filtered by c-score and mappability.
+* `<prefix>_dels.bed` — All deletion genotyping results with detailed metrics (observed/expected read depth).
+* `<prefix>_dups.bed` — All duplication genotyping results with detailed metrics (observed/expected read depth).
+
+
+## Sample Genotype file (required)
+
+### You can use the "svcalls.sh" script under /scripts to generate CNV calls from the 1K Phase 3 SV call set
+
+	1	668630		850204
+	1	963826		974172
+	1	1171539		1179729
+	1	1249799		1265722
+	1	2374226		2379823
+	...
+
+* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Position of a CNV"
+* Provide separate files for deletions (`--dels`) and duplications (`--dups`).
 
 
 ## Repeats file (optional)
@@ -61,20 +84,7 @@ You can optionally provide a repeats file for satellite detection using `--reps`
 * This can be generated from RepeatMasker output. All repeats are loaded; satellite filtering (looking for "Satel" in type or class) is done at runtime.
 
 
-## Sample Genotype file (required)
-### You can use the "svcalls.sh" script under /scripts to generate CNV calls from the 1K Phase 3 SV call set
-
-	1	668630		850204
-	1	963826		974172
-	1	1171539		1179729
-	1	1249799		1265722
-	1	2374226		2379823
-	...
-
-* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Position of a CNV"
-* This file should be separate for duplications and deletions if both are to be genotyped.
-
-## Sample Mappability File (optional)
+## Mappability file (optional)
 
 	1	63913643	63913648	0.2
 	1	63913648	63913649	0.25
@@ -84,26 +94,26 @@ You can optionally provide a repeats file for satellite detection using `--reps`
 
 Using a mappability file (--mappability) increases the accuracy of CONGA's predictions. We used the 100-mer mappability file from http://hgdownload.cse.ucsc.edu/goldenpath/hg19/encodeDCC/wgEncodeMapability/ and converted the bigWig file into a BED file using "bigWigToBedGraph".
 
-* The columns are "Chromosome Name" (TAB) "Start Position of a CNV" (TAB) "End Position of a CNV" (TAB) "Mappability value"
+* The columns are "Chromosome Name" (TAB) "Start" (TAB) "End" (TAB) "Mappability value"
     * Note that the mappability value should be between [0,1], where lower values indicate lower mappability intervals, i.e., repeat-rich regions, etc. 
 
 
 ## All parameters
 
-	--input 		[BAM file]         : Input files in sorted and indexed BAM format. (required)
-	--out   		[output prefix]    : Prefix for the output file names. (required)
-	--ref   		[reference genome] : Reference genome in FASTA format. (required)
+	--input 		[BAM file]         : Input file in sorted and indexed BAM format (required).
+	--out   		[output prefix]    : Prefix for the output file names (required).
+	--ref   		[reference genome] : Reference genome in FASTA format (required).
+	--dels          	[BED file]         : Known deletion SVs in BED format.
+	--dups          	[BED file]         : Known duplication SVs in BED format.
 	--reps          	[repeats file]     : Repeat regions file for satellite detection (optional).
-	--dels          	[bed file]         : Known deletion SVs in bed format
-	--dups          	[bed file]         : Known duplication SVs in bed format
-	--mappability   	[bed file]         : Mappability file in BED format
+	--mappability   	[BED file]         : Mappability file in BED format.
 	--first-chr     	[chromosome index] : The index of the first chromosome for genotyping in your BAM.
 	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
-	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps)
-	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps)
-	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: no-filter)
-	--c-score               [float]            : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).
-	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).
+	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps).
+	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps).
+	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: no-filter).
+	--c-score               [float]            : Minimum c-score to filter variants (more conservative with lower values, default: 0.5).
+	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (suggested for >5x only).
 	
 	Information:
 	--version                  		   : Print version and exit.

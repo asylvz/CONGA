@@ -188,26 +188,26 @@ int parse_cmd_line( int argc, char** argv, parameters* params)
 
 void print_help( void)
 {  
-	fprintf( stdout, "\n\t... CONGA (COpy Number variation Genotyping in Ancient genomes) ...\n\n");
-	fprintf( stdout, "\tVersion %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
-	fprintf( stdout, "\tParameters:\n");
-	fprintf( stdout, "\t--input [BAM file]        : Input file in sorted and indexed BAM format (required).\n");
-	fprintf( stdout, "\t--out [output prefix]     : Prefix for the output file names (required).\n");
-	fprintf( stdout, "\t--ref [reference genome]  : Reference genome in FASTA format (required).\n");
-	fprintf( stdout, "\t--dels [BED file]         : Known deletion SVs in BED format\n");
-	fprintf( stdout, "\t--reps [repeats file]     : Repeat regions file: chr start end type class (optional).\n");
-	fprintf( stdout, "\t--dups [BED file]         : Known duplication SVs in BED format\n");
-	fprintf( stdout, "\t--first-chr [chr index]   : The index of the first chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--last-chr [chr index]    : The index of the last chromosome for genotyping in your BAM\n");
-	fprintf( stdout, "\t--mappability [BED file]  : Mappability file in BED format\n");
-	fprintf( stdout, "\t--min-read-length [INT]   : Minimum length of a read to be processed for RP (default: 60 bps)\n");
-	fprintf( stdout, "\t--min-sv-size [INT]       : Minimum length of a CNV (default: 1000 bps)\n");
-	fprintf( stdout, "\t--min-mapq [INT]          : Minimum mapping quality filter for reads (default: no-filter)\n");
-	fprintf( stdout, "\t--c-score [FLOAT]         : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).\n");
-	fprintf( stdout, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).\n");
+	fprintf( stderr, "\n\t... CONGA (COpy Number variation Genotyping in Ancient genomes) ...\n\n");
+	fprintf( stderr, "\tVersion %s\n\tLast update: %s, build date: %s\n\n", CONGA_VERSION, CONGA_UPDATE, BUILD_DATE);
+	fprintf( stderr, "\tParameters:\n");
+	fprintf( stderr, "\t--input [BAM file]        : Input file in sorted and indexed BAM format (required).\n");
+	fprintf( stderr, "\t--out [output prefix]     : Prefix for the output file names (required).\n");
+	fprintf( stderr, "\t--ref [reference genome]  : Reference genome in FASTA format (required).\n");
+	fprintf( stderr, "\t--dels [BED file]         : Known deletion SVs in BED format\n");
+	fprintf( stderr, "\t--reps [repeats file]     : Repeat regions file: chr start end type class (optional).\n");
+	fprintf( stderr, "\t--dups [BED file]         : Known duplication SVs in BED format\n");
+	fprintf( stderr, "\t--first-chr [chr index]   : The index of the first chromosome for genotyping in your BAM\n");
+	fprintf( stderr, "\t--last-chr [chr index]    : The index of the last chromosome for genotyping in your BAM\n");
+	fprintf( stderr, "\t--mappability [BED file]  : Mappability file in BED format\n");
+	fprintf( stderr, "\t--min-read-length [INT]   : Minimum length of a read to be processed for RP (default: 60 bps)\n");
+	fprintf( stderr, "\t--min-sv-size [INT]       : Minimum length of a CNV (default: 1000 bps)\n");
+	fprintf( stderr, "\t--min-mapq [INT]          : Minimum mapping quality filter for reads (default: no-filter)\n");
+	fprintf( stderr, "\t--c-score [FLOAT]         : Minimum c-score to filter variants (More conservative with lower values, default: 0.5).\n");
+	fprintf( stderr, "\t--rp [INT]                : Enable split-read and set minimum read-pair support for a duplication (Suggested for >5x only).\n");
 
-	fprintf( stdout, "\n\tInformation:\n");
-	fprintf( stdout, "\t--version                 : Print version and exit.\n");
-	fprintf( stdout, "\t--help                    : Print this help screen and exit.\n\n");
-	fprintf(stderr,"\n\t* For more information, please consult https://github.com/asylvz/CONGA\n\n");
+	fprintf( stderr, "\n\tInformation:\n");
+	fprintf( stderr, "\t--version                 : Print version and exit.\n");
+	fprintf( stderr, "\t--help                    : Print this help screen and exit.\n\n");
+	fprintf( stderr, "\n\t* For more information, please consult https://github.com/asylvz/CONGA\n\n");
 }
