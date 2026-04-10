@@ -3,8 +3,6 @@
 
 CONGA is a genotyping algorithm for Copy Number Variations (large deletions and duplications) in ancient genomes. It is tailored for calling homozygous and heterozygous CNV genotypes at low depths of coverage using read-depth and read-pair information from a BAM file with Illumina short single-end reads.
 
-Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an issue for your questions.
-
 
 ## Installation
 
@@ -13,15 +11,14 @@ Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an
 	conda install -c bioconda conga
 
 ### From source
-
 #### Requirements
 
- * htslib	(included as submodule; http://htslib.org/)
- 	* libbz2, liblzma, libcurl are required by htslib
+* htslib	(included as submodule; http://htslib.org/)
+* libbz2, liblzma, libcurl are required by htslib
 
 *Installing development libraries (requires sudo access):* ***"sudo apt-get install zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"***
 
-#### Build
+#### Build and Run
 
 	git clone https://github.com/asylvz/CONGA --recursive
 	cd CONGA && make libs && make
@@ -29,12 +26,9 @@ Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an
 	./conga --input myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
-* Optionally, you can provide a repeats file to filter out reads in satellite regions: `--reps repeats.bed` (only used with `--rp`)
-
-## Docker Usage
+### Docker Usage
 
 	docker pull asylvz/conga
-
 	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output asylvz/conga --input /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 
@@ -78,7 +72,7 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 
 ## Repeats file (optional, only used with --rp)
 
-You can optionally provide a repeats file to filter out reads in satellite regions using `--reps`. This is only effective when split-read mode is enabled with `--rp`. The file should be tab-delimited with 5 columns:
+You can optionally provide a repeats file to filter out reads in satellite regions using `--reps`. The file should be tab-delimited with 5 columns:
 
 	chr1	10000	20000	(CATTC)n	Satellite
 	chr1	50000	60000	L1ME1		LINE/L1
