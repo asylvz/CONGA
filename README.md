@@ -87,26 +87,32 @@ You can optionally provide a repeats file to filter out reads in satellite regio
 * This can be generated from RepeatMasker output. All repeats are loaded; satellite filtering (looking for "Satel" in type or class) is done at runtime.
 
 
-## All parameters
+## Parameters
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `--input` | BAM file | Input file in sorted and indexed BAM format (required) |
-| `--out` | output prefix | Prefix for the output file names (required) |
-| `--ref` | reference genome | Reference genome in FASTA format (required) |
-| `--dels` | BED file | Known deletion SVs in BED format |
-| `--dups` | BED file | Known duplication SVs in BED format |
-| `--reps` | repeats file | Repeat regions file to filter out satellite regions (only used with `--rp`) |
-| `--mappability` | BED file | Mappability file in BED format |
-| `--first-chr` | chromosome index | The index of the first chromosome for genotyping in your BAM |
-| `--last-chr` | chromosome index | The index of the last chromosome for genotyping in your BAM |
-| `--min-read-length` | integer | Minimum length of a read to be processed for RP (default: 60) |
-| `--min-sv-size` | integer | Minimum length of a CNV (default: 1000) |
-| `--min-mapq` | integer | Minimum mapping quality threshold for reads (default: no filter) |
-| `--c-score` | float | Minimum c-score to filter variants; lower values are more conservative (default: 0.5) |
-| `--rp` | integer | Enable split-read and set minimum read-pair support for duplications (suggested for >5x only) |
-| `--version` | | Print version and exit |
-| `--help` | | Print help screen and exit |
+**Required:**
+
+	--input            Input file in sorted and indexed BAM format.
+	--out              Prefix for the output file names.
+	--ref              Reference genome in FASTA format.
+	--dels             Known deletion SVs in BED format.
+	--dups             Known duplication SVs in BED format.
+
+**Optional:**
+
+	--mappability      Mappability file in BED format.
+	--reps             Repeat regions file to filter out satellite regions (only used with --rp).
+	--rp               Enable split-read and set read-pair support threshold for duplications (suggested for >5x).
+	--first-chr        Index of the first chromosome for genotyping (default: all).
+	--last-chr         Index of the last chromosome for genotyping (default: all).
+	--min-read-length  Minimum read length for read-pair analysis (default: 60).
+	--min-sv-size      Minimum CNV length (default: 1000).
+	--min-mapq         Minimum mapping quality threshold (default: no filter).
+	--c-score          Minimum c-score for filtering; lower is more conservative (default: 0.5).
+
+**Info:**
+
+	--version          Print version and exit.
+	--help             Print help screen and exit.
 
 
 ## Citation
