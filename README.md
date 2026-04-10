@@ -6,15 +6,22 @@ CONGA is a genotyping algorithm for Copy Number Variations (large deletions and 
 Please feel free to send me an e-mail (asoylev@gmail.com), or better yet open an issue for your questions.
 
 
-## Requirements
-CONGA is developed and tested using Linux Ubuntu operating system
+## Installation
+
+### Bioconda (recommended)
+
+	conda install -c bioconda conga
+
+### From source
+
+#### Requirements
 
  * htslib	(included as submodule; http://htslib.org/)
  	* libbz2, liblzma, libcurl are required by htslib
- 
+
 *Installing development libraries (requires sudo access):* ***"sudo apt-get install zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev"***
 
-## Downloading, compiling and running
+#### Build
 
 	git clone https://github.com/asylvz/CONGA --recursive
 	cd CONGA && make libs && make
@@ -22,31 +29,13 @@ CONGA is developed and tested using Linux Ubuntu operating system
 	./conga --input myinput.bam --ref human_g1k_v37.fasta \
 		--dels known_dels.bed --dups known_dups.bed --out myoutput
 
-* Optionally, you can provide a repeats file for satellite detection: `--reps repeats.bed`
-
-## Compiling and running without sudo access
-
-If you do not have root access to install liblzma and/or libbz2, you can compile htslib without CRAM support. However, the libz library is still required, please talk to your admin if it is not available on your system.
-	
-	make nocram
-
-	./conga-nocram --input myinput.bam --ref human_g1k_v37.fasta \
-		--dels known_dels.bed --dups known_dups.bed --out myoutput
+* Optionally, you can provide a repeats file to filter out reads in satellite regions: `--reps repeats.bed` (only used with `--rp`)
 
 ## Docker Usage
 
-Another alternative to run CONGA is using [Docker](https://www.docker.com)
-
-	cd docker
-	docker build . -t conga:latest
-
-Your image named "conga" should be ready. You can run CONGA using this image by
-
-	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output conga --input /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
-
-Alternatively, you can pull from Docker Hub:
-
 	docker pull asylvz/conga
+
+	docker run --user=$UID -v /home/projects/conga:/input -v /home/projects/conga:/output asylvz/conga --input /input/myinput.bam --ref /input/human_g1k_v37.fasta --dels /input/known_dels.bed --dups /input/known_dups.bed --out /output/mydockertest
 
 
 ## Output
@@ -73,17 +62,6 @@ CONGA produces three output files based on the `--out` prefix:
 * Provide separate files for deletions (`--dels`) and duplications (`--dups`).
 
 
-## Repeats file (optional)
-
-You can optionally provide a repeats file for satellite detection using `--reps`. The file should be tab-delimited with 5 columns:
-
-	chr1	10000	20000	(CATTC)n	Satellite
-	chr1	50000	60000	L1ME1		LINE/L1
-
-* The columns are "Chromosome Name" (TAB) "Start" (TAB) "End" (TAB) "Repeat Type" (TAB) "Repeat Class"
-* This can be generated from RepeatMasker output. All repeats are loaded; satellite filtering (looking for "Satel" in type or class) is done at runtime.
-
-
 ## Mappability file (optional)
 
 	1	63913643	63913648	0.2
@@ -98,6 +76,17 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
     * Note that the mappability value should be between [0,1], where lower values indicate lower mappability intervals, i.e., repeat-rich regions, etc. 
 
 
+## Repeats file (optional, only used with --rp)
+
+You can optionally provide a repeats file to filter out reads in satellite regions using `--reps`. This is only effective when split-read mode is enabled with `--rp`. The file should be tab-delimited with 5 columns:
+
+	chr1	10000	20000	(CATTC)n	Satellite
+	chr1	50000	60000	L1ME1		LINE/L1
+
+* The columns are "Chromosome Name" (TAB) "Start" (TAB) "End" (TAB) "Repeat Type" (TAB) "Repeat Class"
+* This can be generated from RepeatMasker output. All repeats are loaded; satellite filtering (looking for "Satel" in type or class) is done at runtime.
+
+
 ## All parameters
 
 	--input 		[BAM file]         : Input file in sorted and indexed BAM format (required).
@@ -105,7 +94,7 @@ Using a mappability file (--mappability) increases the accuracy of CONGA's predi
 	--ref   		[reference genome] : Reference genome in FASTA format (required).
 	--dels          	[BED file]         : Known deletion SVs in BED format.
 	--dups          	[BED file]         : Known duplication SVs in BED format.
-	--reps          	[repeats file]     : Repeat regions file for satellite detection (optional).
+	--reps          	[repeats file]     : Repeat regions file to filter out satellite regions (optional, only used with --rp).
 	--mappability   	[BED file]         : Mappability file in BED format.
 	--first-chr     	[chromosome index] : The index of the first chromosome for genotyping in your BAM.
 	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
