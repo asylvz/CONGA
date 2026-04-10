@@ -89,24 +89,24 @@ You can optionally provide a repeats file to filter out reads in satellite regio
 
 ## All parameters
 
-	--input 		[BAM file]         : Input file in sorted and indexed BAM format (required).
-	--out   		[output prefix]    : Prefix for the output file names (required).
-	--ref   		[reference genome] : Reference genome in FASTA format (required).
-	--dels          	[BED file]         : Known deletion SVs in BED format.
-	--dups          	[BED file]         : Known duplication SVs in BED format.
-	--reps          	[repeats file]     : Repeat regions file to filter out satellite regions (optional, only used with --rp).
-	--mappability   	[BED file]         : Mappability file in BED format.
-	--first-chr     	[chromosome index] : The index of the first chromosome for genotyping in your BAM.
-	--last-chr      	[chromosome index] : The index of the last chromosome for genotyping in your BAM.
-	--min-read-length	[integer]	   : Minimum length of a read to be processed for RP (default: 60 bps).
-	--min-sv-size		[integer]	   : Minimum length of a CNV (default: 1000 bps).
-	--min-mapq		[integer]	   : Minimum mapping quality threshold for reads (default: no-filter).
-	--c-score               [float]            : Minimum c-score to filter variants (more conservative with lower values, default: 0.5).
-	--rp                    [integer]          : Enable split-read and set minimum read-pair support for a duplication (suggested for >5x only).
-	
-	Information:
-	--version                  		   : Print version and exit.
-	--help 		                           : Print this help screen and exit.
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `--input` | BAM file | Input file in sorted and indexed BAM format (required) |
+| `--out` | output prefix | Prefix for the output file names (required) |
+| `--ref` | reference genome | Reference genome in FASTA format (required) |
+| `--dels` | BED file | Known deletion SVs in BED format |
+| `--dups` | BED file | Known duplication SVs in BED format |
+| `--reps` | repeats file | Repeat regions file to filter out satellite regions (only used with `--rp`) |
+| `--mappability` | BED file | Mappability file in BED format |
+| `--first-chr` | chromosome index | The index of the first chromosome for genotyping in your BAM |
+| `--last-chr` | chromosome index | The index of the last chromosome for genotyping in your BAM |
+| `--min-read-length` | integer | Minimum length of a read to be processed for RP (default: 60) |
+| `--min-sv-size` | integer | Minimum length of a CNV (default: 1000) |
+| `--min-mapq` | integer | Minimum mapping quality threshold for reads (default: no filter) |
+| `--c-score` | float | Minimum c-score to filter variants; lower values are more conservative (default: 0.5) |
+| `--rp` | integer | Enable split-read and set minimum read-pair support for duplications (suggested for >5x only) |
+| `--version` | | Print version and exit |
+| `--help` | | Print help screen and exit |
 
 
 ## Citation
